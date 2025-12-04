@@ -2,5 +2,7 @@ using RobustNMF
 using Test
 
 @testset "RobustNMF.jl" begin
-    # Write your tests here.
+    @testset "timestwo tests" begin
+        @test timestwo(2) == 4
+    end
 end
