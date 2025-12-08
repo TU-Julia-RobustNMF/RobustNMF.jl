@@ -81,6 +81,7 @@ function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::B
     return X
 end
 
+
 """
 
     add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
@@ -119,6 +120,7 @@ end
 # X, W,_true, H_true = generate_synthetic_data(100, 80; rank=8)
 # add_gaussian_noise!(X; σ=0.2)
 # add_sparse_outliers!(X; fraction=0.02, magnitude=10.0)
+
 
 """
 
