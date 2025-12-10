@@ -1,15 +1,8 @@
 module RobustNMF
 
-# Write your package code here.
+include("DataPreparation.jl")
+using .DataPreparation: generate_synthetic_data, add_noise_and_outliers, normalize_data
 
-"""
-    timestwo(x)
-
-Multiply the input `x` by two.
-"""
-timestwo(x) = 2 * x
-
-export timestwo
-
+export generate_synthetic_data, add_noise_and_outliers, normalize_data
 
 end # module RobustNMF
