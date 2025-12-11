@@ -2,6 +2,11 @@ module DataPreparation
 
 using Random
 
+export generate_synthetic_data, add_noise_and_outliers, normalize_data
+
+
+
+
 """
 `generate_synthetic_data(m, n, r; seed=42)`
 
