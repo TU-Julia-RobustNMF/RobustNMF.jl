@@ -106,7 +106,7 @@ function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitu
     total = m * n
     k = max(1, round(Int, fraction * total))
 
-    # Sample k random linear indices into X
+    # Sample k random linear indices into X 4×4=16
     idx = rand(1:total, k)
 
     # Add large positive outliers at these positions
@@ -114,12 +114,6 @@ function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitu
     
     return X
 end
-
-# Example:
-# --------
-# X, W,_true, H_true = generate_synthetic_data(100, 80; rank=8)
-# add_gaussian_noise!(X; σ=0.2)
-# add_sparse_outliers!(X; fraction=0.02, magnitude=10.0)
 
 
 """
@@ -168,6 +162,9 @@ in `[0, 1]`.
 """
 function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png", normalize::Bool=true)
 
+    # add condition to check if directory exists
+    # ------------------------------------------
+
     # List all files in the directory (with full paths)
     files = sort(readdir(dir; join=true))
 
@@ -197,7 +194,7 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png",
         size(img) == (h, w) || error("All images must have same size")
     end
 
-    # Flatten and stach as columns in X
+    # Flatten and stack as columns in X
     num = length(imgs)
     X = zeros(h * w, num)
     for (j, img) in enumerate(imgs)
@@ -215,5 +212,6 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png",
     return X, (h, w), filenames
 
 end
+
 
 end  # module Data

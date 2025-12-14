@@ -56,7 +56,7 @@ end
     Y = [-2.5 0.0 3.0; -1.0 7.0 1.0]
     normalize_nonnegative!(Y; rescale=true)
     @test minimum(Y) >= 0.0
-    @test maximum(Y) ≈ 1.0
+    @test maximum(Y) ≈ 1.0 
 
 end
 
@@ -73,7 +73,7 @@ end
         X, (h, w), filenames = load_image_folder(dir; pattern=".png", normalize=false)
 
         @test (h, w) == (4, 4)
-        @test size(X) == (16, 2)  # 4×4 pizels, 2 images
+        @test size(X) == (16, 2)  # 4×4 pixels, 2 images
         @test length(filenames) == 2
     end
 
