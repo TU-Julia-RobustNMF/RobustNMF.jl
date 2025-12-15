@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(RobustNMF, :DocTestSetup, :(using RobustNMF); recursive=true
 
 makedocs(;
     modules=[RobustNMF],
-    authors="Haitham Samaan <h.samaan@campus.tu-berlin.de>",
+    authors="Haitham Samaan <h.samaan@campus.tu-berlin.de>, Adrian Brag",
     sitename="RobustNMF.jl",
     format=Documenter.HTML(;
         canonical="https://hai-sam.github.io/RobustNMF.jl",
@@ -13,7 +13,8 @@ makedocs(;
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md",
+        "Getting Started" => "index.md",
+        "Functions" => "functions.md",
     ],
 )
 
