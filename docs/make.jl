@@ -8,7 +8,7 @@ makedocs(;
     authors="Haitham Samaan <h.samaan@campus.tu-berlin.de>, Adrian Brag",
     sitename="RobustNMF.jl",
     format=Documenter.HTML(;
-        canonical="https://tu-julia-robustnmf.github.io/RobustNMF.jl/dev/",
+        canonical="https://tu-julia-robustnmf.github.io/RobustNMF.jl",
         edit_link="master",
         assets=String[],
     ),
