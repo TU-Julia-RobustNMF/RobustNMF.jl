@@ -16,7 +16,7 @@ reconstruction loss.
 - `H`: non-negative coefficient matrix of size `(rank, n)`
 - `history`: vector containing the Frobenius reconstruction error at each iteration
 
-The reconstructed data matrix can be obtained as `W * H`.
+The reconstructed data matrix can be obtained as `W * H`
 """
 function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
         m, n = size(X)
