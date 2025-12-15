@@ -7,6 +7,7 @@
 
 This project implements **Non-negative Matrix Factorization (NMF)** methods in Julia, with a focus on robustness against noise and outliers.
 
+
 The package provides:
 
 -   a standard NMF implementation using an L2 (Frobenius) loss
