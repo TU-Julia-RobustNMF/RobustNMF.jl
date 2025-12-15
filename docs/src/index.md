@@ -7,8 +7,9 @@ CurrentModule = RobustNMF
 Documentation for [RobustNMF](https://github.com/hai-sam/RobustNMF.jl).
 
 ```@index
+
 ```
 
 ```@autodocs
-Modules = [RobustNMF]
+Modules = [RobustNMF, RobustNMF.Data]
 ```
