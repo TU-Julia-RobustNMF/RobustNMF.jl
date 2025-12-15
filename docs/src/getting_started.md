@@ -22,10 +22,10 @@ using RobustNMF
 Perform robust non-negative matrix factorization on your data:
 
 ```julia
-# Your data matrix
-X = rand(100, 50)
+# generate data
+X, W, H = generate_synthetic_data(20, 30)
 
-# Initialize and run factorization
+# add noise
 W, H = robust_nmf(X, rank=10)
 
 # Reconstruct

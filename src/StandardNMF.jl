@@ -5,11 +5,18 @@ using LinearAlgebra, Random
 export nmf, X_reconstruct
 
 """
-    nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4, seed=nothing)
+     nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4)
 
-Standard NMF mit L2-Loss und multiplicative updates.
+Compute a standard Non-negative Matrix Factorization (NMF) of the non-negative
+data matrix `X ∈ ℝ^{m×n}` using multiplicative update rules and an L2 (Frobenius)
+reconstruction loss. 
 
-Gibt `(W, H, history)` zurück.
+### Returns
+- `W`: non-negative basis matrix of size `(m, rank)`
+- `H`: non-negative coefficient matrix of size `(rank, n)`
+- `history`: vector containing the Frobenius reconstruction error at each iteration
+
+The reconstructed data matrix can be obtained as `W * H`.
 """
 function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
         m, n = size(X)
