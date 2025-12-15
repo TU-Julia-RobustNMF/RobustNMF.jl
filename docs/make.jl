@@ -19,6 +19,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/tu-julia-robustnmf/RobustNMF.jl.git",
-    devbranch="master",
+    deploy_config = Documenter.GitHubActions(),
 )
