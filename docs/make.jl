@@ -5,19 +5,20 @@ DocMeta.setdocmeta!(RobustNMF, :DocTestSetup, :(using RobustNMF); recursive=true
 
 makedocs(;
     modules=[RobustNMF],
-    authors="Haitham Samaan <h.samaan@campus.tu-berlin.de>, Adrian Brag <a.brag@campus.tu-berlin.de>",
+    authors="Haitham Samaan <h.samaan@campus.tu-berlin.de>, Adrian Brag",
     sitename="RobustNMF.jl",
     format=Documenter.HTML(;
-        canonical="https://hai-sam.github.io/RobustNMF.jl",
+        canonical="https://TU-Julia-RobustNMF.github.io/RobustNMF.jl",
         edit_link="master",
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md",
+        "Getting Started" => "index.md",
+        "Functions" => "functions.md",
     ],
 )
 
 deploydocs(;
-    repo="github.com/hai-sam/RobustNMF.jl",
+    repo="github.com/TU-Julia-RobustNMF/RobustNMF.jl",
     devbranch="master",
 )

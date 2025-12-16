@@ -1,8 +1,4 @@
-using RobustNMF
 using Test
+using RobustNMF
 
-@testset "RobustNMF.jl" begin
-    @testset "timestwo tests" begin
-        @test timestwo(2) == 4
-    end
-end
+include("test_data.jl")
