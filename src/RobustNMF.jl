@@ -3,7 +3,6 @@ module RobustNMF
 include("Data.jl")
 
 using .Data
-
 export
 generate_synthetic_data, 
 add_gaussian_noise!, 
@@ -14,5 +13,10 @@ load_image_folder
 include("StandardNMF.jl")
 using .StandardNMF
 export nmf, X_reconstruct
+
+include("RobustNMFAlgorithms.jl")
+using .RobustNMFAlgorithms
+export robust_nmf
+
 
 end # module RobustNMF
