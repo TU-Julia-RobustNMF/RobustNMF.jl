@@ -4,7 +4,7 @@ CurrentModule = RobustNMF
 
 # RobustNMF
 
-Documentation for [RobustNMF](https://github.com/hai-sam/RobustNMF.jl).
+Documentation for [RobustNMF](https://github.com/TU-Julia-RobustNMF/RobustNMF.jl).
 
 ```@index
 
