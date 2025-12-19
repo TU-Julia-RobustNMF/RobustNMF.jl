@@ -24,6 +24,31 @@ Generate a non-negative matrix `X ∈ R^{m×n}` by sampling non-negative factors
 
 Optionally add Gaussian noise with standard deviation `noise_level` and clip the result at `0.0`
 to keep `X` non-negative.
+
+# Arguments
+- `m::Int`: Number of rows of `X`.
+- `n::Int`: Number of columns of `X`.
+
+# Keyword Arguments
+- `rank::Int=10`: Rank of the factorization.
+- `noise_level::Float64=0.0`: Standard deviation of Gaussian noise.
+- `seed`: Optional random seed for reproducibility.
+
+# Returns
+- `X::Matrix{Float64}`: Generated non-negative data matrix.
+- `W::Matrix{Float64}`: Left factor.
+- `H::Matrix{Float64}`: Right factor.
+
+# Examples
+```jldoctest
+julia> X, W, H = generate_synthetic_data(20, 15; rank=3, seed=42);
+
+julia> size(W), size(H)
+((20, 3), (3, 15))
+
+julia> minimum(X) >= 0
+true
+```
 """
 function generate_synthetic_data(m::Int, n::Int; rank::Int=10, 
     noise_level::Float64=0.0, seed=nothing)
