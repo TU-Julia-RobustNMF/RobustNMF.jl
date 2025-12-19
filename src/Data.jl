@@ -85,6 +85,26 @@ Add Gaussian noise with standard deviation `σ` to the matrix `X` in-place.
 
 If `clip_at_zero` is `true`, replace all negative entries of `X` with `0.0` after adding noise,
 to preserve non-negativity.
+
+# Arguments
+- `X::AbstractMatrix`: Data matrix to be corrupted.
+
+# Keyword Arguments
+- `σ::Float64=0.1`: Noise standard deviation.
+- `clip_at_zero::Bool=true`: Enforce non-negativity after corruption.
+
+# Returns
+- `X`: The modified input matrix.
+
+# Examples
+```jldoctest
+julia> X = abs.(randn(5, 5));
+
+julia> add_gaussian_noise!(X; σ=0.2);
+
+julia> minimum(X) >= 0
+true
+```
 """
 function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
     
@@ -117,6 +137,27 @@ Add sparcse, large positive outliers to a fraction of the entries of `X` in-plac
 `fraction` controls the proportion of entries that are modified.
 Each selected entry is increased by a random value drawn from `Uniform(0, magnitude)`.
 If `seed` is provided, the random choices are reproducible.
+
+# Arguments
+- `X::AbstractMatrix`: Data matrix to be corrupted.
+
+# Keyword Arguments
+- `fraction::Float64=0.01`: Fraction of entries to corrupt.
+- `magnitude::Float64=5.0`: Maximum outlier amplitude.
+- `seed`: Optional random seed.
+
+# Returns
+- `X`: The modified input matrix.
+
+# Examples
+```jldoctest
+julia> X = zeros(10, 10);
+
+julia> add_sparse_outliers!(X; fraction=0.05, seed=1);
+
+julia> count(x -> x > 0, X) > 0
+true
+```
 """
 function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
     seed=nothing)
@@ -148,6 +189,25 @@ end
 Shift the matrix `X` in-place so that its minimum value becomes `0.0` if it is negative.
 If `rescale` is `true`, also divide `X` by its maximum value so that all entries lie in the
 interval `[0, 1]`.
+
+# Arguments
+- `X::AbstractMatrix`: Input matrix.
+
+# Keyword Arguments
+- `rescale::Bool=true`: Whether to divide by the maximum value.
+
+# Returns
+- `X`: The normalized matrix.
+
+# Examples
+```jldoctest
+julia> X = [-1.0 2.0; 3.0 -4.0];
+
+julia> normalize_nonnegative!(X);
+
+julia> minimum(X), maximum(X)
+(0.0, 1.0)
+```
 """
 function normalize_nonnegative!(X::AbstractMatrix; rescale::Bool=true)
 
@@ -184,6 +244,24 @@ Returns a tuple `(X, (height, width), filenames)`, where:
 
 If `normalize` is `true`, the matrix `X` is shifted and rescaled to be non-negative with entries
 in `[0, 1]`.
+
+
+# Arguments
+- `dir::AbstractString`: Path to the image directory.
+
+# Keyword Arguments
+- `pattern::AbstractString="*.png"`: File extension filter.
+- `normalize::Bool=true`: Normalize output matrix to `[0, 1]`.
+
+# Returns
+- `X::Matrix{Float64}`: One column per image.
+- `(height, width)`: Original image dimensions.
+- `filenames::Vector{String}`: Loaded file names.
+
+# Examples
+```jldoctest
+julia> # X, size, names = load_image_folder("faces/")
+```
 """
 function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png", normalize::Bool=true)
 
