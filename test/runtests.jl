@@ -6,7 +6,7 @@ using RobustNMF
     include("test_data.jl")
     
     # NMF algorithm tests
-    @testset "StandardNMF" begin
+    @testset "StandardNMF.jl" begin
         # Test basic NMF functionality
         m, n, r = 30, 20, 5
         X, W_true, H_true = generate_synthetic_data(m, n; rank=r, seed=123)
