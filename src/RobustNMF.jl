@@ -63,8 +63,6 @@ include("StandardNMF.jl")
 using .StandardNMF
 export nmf, X_reconstruct
 
-end # module RobustNMF
-
 include("Plotting.jl")
 using .Plotting
 export plot_basis_vectors, plot_activation_coefficients, 
