@@ -2,7 +2,6 @@ using Test
 using RobustNMF
 @testset "RobustNMF.jl Test Suite" begin
     
-    # Data generation and preprocessing tests
     include("test_data.jl")
     
     # NMF algorithm tests
