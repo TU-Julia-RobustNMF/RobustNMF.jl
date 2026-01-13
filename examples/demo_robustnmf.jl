@@ -1,23 +1,9 @@
-#=
-Demo Script for RobustNMF.jl
-=============================
-
-This script demonstrates:
-1. Factorization of clean and noisy datasets
-2. Visual comparisons between basis vectors (W) and activation coefficients (H)
-3. Original, noisy, and reconstructed data matrices
-4. Error convergence over iterations
-5. Quantitative comparisons between NMF on different noise levels
-
-Required for Project Deliverable #4: Visualization
-=#
-
 using RobustNMF
 using Plots
 using Statistics
 using LinearAlgebra
 
-# Set up output directory for saving plots
+# Setting up output directory for saving plots
 output_dir = "output_plots"
 mkpath(output_dir)
 
@@ -31,12 +17,12 @@ println()
 println("Part 1: Synthetic Data Experiments")
 println("-"^70)
 
-# Generate clean synthetic data
+# Generating clean synthetic data
 println("→ Generating synthetic data (100×60 matrix, rank 10)...")
 m, n, true_rank = 100, 60, 10
 X_clean, W_true, H_true = generate_synthetic_data(m, n; rank=true_rank, seed=42)
 
-# Create corrupted versions
+# Creating corrupted versions
 println("→ Creating corrupted versions:")
 X_gaussian = copy(X_clean)
 add_gaussian_noise!(X_gaussian; σ=0.1)
