@@ -27,11 +27,7 @@ using RobustNMF
         @test history[end] < 1.0  # Should converge to reasonable error
     end
     
-    # Visualization tests (includes demo with saved plots)
+    # Visualization tests
     include("test_plotting.jl")
     
 end
-
-println("\n" * "="^60)
-println("✓ All tests passed!")
-println("="^60)
