@@ -1,8 +1,3 @@
-module RobustNMFAlgorithms
-
-
-export robust_nmf
-
 using LinearAlgebra
 using Random
 using Statistics
@@ -71,4 +66,3 @@ function robust_nmf(
     return W, H, history
 end
 
-end # module RobustNMFAlgorithms

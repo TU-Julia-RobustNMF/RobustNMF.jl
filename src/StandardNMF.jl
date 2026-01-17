@@ -1,8 +1,4 @@
-module StandardNMF
-
 using LinearAlgebra, Random
-
-export nmf
 
 """
      nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4)
@@ -45,4 +41,3 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
         return W, H, history
 end
 
-end # end module 

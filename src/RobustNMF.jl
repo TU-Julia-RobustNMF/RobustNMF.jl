@@ -49,22 +49,18 @@ julia> normalize_nonnegative!(X);
 module RobustNMF
 
 include("Data.jl")
-
-using .Data
+include("StandardNMF.jl")
+include("RobustNMFAlgorithms.jl")
 
 export
-generate_synthetic_data, 
-add_gaussian_noise!, 
-add_sparse_outliers!, 
-normalize_nonnegative!, 
-load_image_folder
+generate_synthetic_data,
+add_gaussian_noise!,
+add_sparse_outliers!,
+normalize_nonnegative!,
+load_image_folder,
+nmf,
+X_reconstruct,
+robust_nmf
 
-include("StandardNMF.jl")
-using .StandardNMF
-export nmf, X_reconstruct
-
-include("RobustNMFAlgorithms.jl")
-using .RobustNMFAlgorithms
-export robust_nmf
 end # module RobustNMF
 

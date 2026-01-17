@@ -11,5 +11,5 @@ Documentation for [RobustNMF](https://github.com/TU-Julia-RobustNMF/RobustNMF.jl
 ```
 
 ```@autodocs
-Modules = [RobustNMF, RobustNMF.Data, RobustNMF.StandardNMF, RobustNMF.RobustNMFAlgorithms]
+Modules = [RobustNMF]
 ```
