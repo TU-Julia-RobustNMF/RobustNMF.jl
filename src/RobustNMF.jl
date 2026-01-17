@@ -13,6 +13,10 @@ load_image_folder
 
 include("StandardNMF.jl")
 using .StandardNMF
-export nmf, X_reconstruct
+export nmf
+
+include("RobustNMFAlgorithms.jl")
+using .RobustNMFAlgorithms
+export robust_nmf
 
 end # module RobustNMF
