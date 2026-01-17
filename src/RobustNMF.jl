@@ -63,4 +63,8 @@ include("StandardNMF.jl")
 using .StandardNMF
 export nmf, X_reconstruct
 
+include("RobustNMFAlgorithms.jl")
+using .RobustNMFAlgorithms
+export robust_nmf
 end # module RobustNMF
+

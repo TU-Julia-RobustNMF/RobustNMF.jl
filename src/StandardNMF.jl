@@ -2,7 +2,7 @@ module StandardNMF
 
 using LinearAlgebra, Random
 
-export nmf, X_reconstruct
+export nmf
 
 """
      nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4)
@@ -22,8 +22,7 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
         m, n = size(X)
         W = rand(m, rank)
         H = rand(rank, n)
-        
-        @assert minimum(X) ≥ 0 "X must be non-negative"
+        @assert minimum(X) >= 0 "X must be non-negative"
 
         history = zeros(maxiter)
         prev_err = Inf
