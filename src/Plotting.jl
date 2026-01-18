@@ -20,13 +20,22 @@ function _finalize_plot(p; savepath=nothing, display_plot=true)
 end
 
 """
-    plot_factors(W, H; savepath=nothing, display_plot=true, heatmap_kwargs...)
+    plot_factors(W, H; clims_W=nothing, clims_H=nothing, savepath=nothing,
+                 display_plot=true, heatmap_kwargs...)
 
 Plot factor matrices `W` and `H` as heatmaps in a single figure.
 """
-function plot_factors(W, H; savepath=nothing, display_plot=true, heatmap_kwargs...)
-    p1 = _heatmap(W; title="W", xlabel="components", ylabel="features", colorbar=true, heatmap_kwargs...)
-    p2 = _heatmap(H; title="H", xlabel="samples", ylabel="components", colorbar=true, heatmap_kwargs...)
+function plot_factors(
+    W,
+    H;
+    clims_W=nothing,
+    clims_H=nothing,
+    savepath=nothing,
+    display_plot=true,
+    heatmap_kwargs...
+)
+    p1 = _heatmap(W; title="W", xlabel="components", ylabel="features", colorbar=true, clims=clims_W, heatmap_kwargs...)
+    p2 = _heatmap(H; title="H", xlabel="samples", ylabel="components", colorbar=true, clims=clims_H, heatmap_kwargs...)
     p = plot(p1, p2; layout=(1, 2), size=(900, 400))
     return _finalize_plot(p; savepath=savepath, display_plot=display_plot)
 end

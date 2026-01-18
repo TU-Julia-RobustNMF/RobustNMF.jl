@@ -70,9 +70,9 @@ end
 
 """
 
-    add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
+    add_gaussian_noise!(X::AbstractMatrix; sigma::Float64=0.1, clip_at_zero::Bool=true)
 
-Add Gaussian noise with standard deviation `σ` to the matrix `X` in-place.
+Add Gaussian noise with standard deviation `sigma` to the matrix `X` in-place.
 
 If `clip_at_zero` is `true`, replace all negative entries of `X` with `0.0` after adding noise,
 to preserve non-negativity.
@@ -81,7 +81,7 @@ to preserve non-negativity.
 - `X::AbstractMatrix`: Data matrix to be corrupted.
 
 # Keyword Arguments
-- `σ::Float64=0.1`: Noise standard deviation.
+- `sigma::Float64=0.1`: Noise standard deviation.
 - `clip_at_zero::Bool=true`: Enforce non-negativity after corruption.
 
 # Returns
@@ -91,20 +91,20 @@ to preserve non-negativity.
 ```jldoctest
 julia> X = abs.(randn(5, 5));
 
-julia> add_gaussian_noise!(X; σ=0.2);
+julia> add_gaussian_noise!(X; sigma=0.2);
 
 julia> minimum(X) >= 0
 true
 ```
 """
-function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
+function add_gaussian_noise!(X::AbstractMatrix; sigma::Float64=0.1, clip_at_zero::Bool=true)
     
     # Allocate temporary noise buffer with same size/type as X
     noise = similar(X)
 
-    # Fill noise with N(0, 1) samples and scale by σ
+    # Fill noise with N(0, 1) samples and scale by sigma
     randn!(noise)
-    noise .*= σ           
+    noise .*= sigma           
 
     # Add noise to X in-place
     X .+= noise        

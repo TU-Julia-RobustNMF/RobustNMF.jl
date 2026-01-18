@@ -1,11 +1,11 @@
 using LinearAlgebra, Random
 
 """
-     nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4)
+    nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4, seed::Int=0, eps_update::Float64=1e-12)
 
 Compute a standard Non-negative Matrix Factorization (NMF) of the non-negative
-data matrix `X ∈ ℝ^{m×n}` using multiplicative update rules and an L2 (Frobenius)
-reconstruction loss. 
+data matrix `X in R^{m x n}` using multiplicative update rules and an L2 (Frobenius)
+reconstruction loss.
 
 ### Returns
 - `W`: non-negative basis matrix of size `(m, rank)`
@@ -14,30 +14,39 @@ reconstruction loss.
 
 The reconstructed data matrix can be obtained as `W * H`.
 """
-function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
-        m, n = size(X)
-        W = rand(m, rank)
-        H = rand(rank, n)
-        @assert minimum(X) >= 0 "X must be non-negative"
+function nmf(
+    X;
+    rank::Int = 10,
+    maxiter::Int = 500,
+    tol::Float64 = 1e-4,
+    seed::Int = 0,
+    eps_update::Float64 = 1e-12
+)
+    @assert minimum(X) >= 0 "X must be non-negative"
 
-        history = zeros(maxiter)
-        prev_err = Inf
-        ϵ = eps(Float64)
+    Random.seed!(seed)
 
-        # updating H and W 
-        for iter in 1:maxiter
-                H .*= (W' * X) ./ (W' * W * H .+ ϵ)
-                W .*= (X * H') ./ (W * H * H' .+ ϵ)
+    m, n = size(X)
+    W = rand(m, rank)
+    H = rand(rank, n)
 
-                # check how much it changed, if change too small --> stop
-                err = norm(X - W * H) # in julia norm of matrix is frobenius norm by default
-                history[iter] = err
-                if abs(prev_err - err) / (prev_err + ϵ) < tol
-                        history = history[1:iter]
-                        break
-                end
-                prev_err = err
+    history = zeros(Float64, maxiter)
+    prev_err = Inf
+    eps_conv = eps(Float64)
+
+    # updating H and W
+    for iter in 1:maxiter
+        H .*= (W' * X) ./ (W' * W * H .+ eps_update)
+        W .*= (X * H') ./ (W * H * H' .+ eps_update)
+
+        # check how much it changed, if change too small --> stop
+        err = norm(X - W * H)
+        history[iter] = err
+        if abs(prev_err - err) / (prev_err + eps_conv) < tol
+            history = history[1:iter]
+            break
         end
-        return W, H, history
+        prev_err = err
+    end
+    return W, H, history
 end
-

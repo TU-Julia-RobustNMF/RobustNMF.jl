@@ -29,7 +29,6 @@ and loading image datasets into matrix form suitable for NMF.
 
 - **NMF Algorithms**:
   - `nmf`
-  - `X_reconstruct`
 
 # Examples
 ```jldoctest
@@ -40,7 +39,7 @@ julia> X, W, H = generate_synthetic_data(50, 40; rank=5, seed=1);
 julia> size(X)
 (50, 40)
 
-julia> add_gaussian_noise!(X; σ=0.05);
+julia> add_gaussian_noise!(X; sigma=0.05);
 
 julia> normalize_nonnegative!(X);
 ```
@@ -60,7 +59,6 @@ add_sparse_outliers!,
 normalize_nonnegative!,
 load_image_folder,
 nmf,
-X_reconstruct,
 robust_nmf,
 plot_factors,
 plot_reconstruction,

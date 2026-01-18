@@ -30,14 +30,14 @@ end
     X_copy = copy(X)
 
     # Add noise without clipping
-    add_gaussian_noise!(X; σ=0.5, clip_at_zero=false)
+    add_gaussian_noise!(X; sigma=0.5, clip_at_zero=false)
 
     # X should have changed
     @test X != X_copy
 
     # With clipping, all entries must be >= 0
     X2 = fill(0.1, 10, 10)
-    add_gaussian_noise!(X2; σ=1.0, clip_at_zero=true)
+    add_gaussian_noise!(X2; sigma=1.0, clip_at_zero=true)
     @test all(X2 .>= 0.0)
 
 end

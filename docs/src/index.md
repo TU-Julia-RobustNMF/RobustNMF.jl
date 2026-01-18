@@ -34,7 +34,7 @@ Perform robust non-negative matrix factorization:
 X, W, H = generate_synthetic_data(20, 30)
 
 # Add Gaussian noise (in-place)
-add_gaussian_noise!(X, σ = 0.2)
+add_gaussian_noise!(X, sigma = 0.2)
 
 # Add sparse outliers (in-place)
 add_sparse_outliers!(X, fraction = 0.04, magnitude = 5.2)
