@@ -48,6 +48,9 @@ W_nmf, H_nmf, history = nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
 # Reconstruct the data matrix (X)
 X_rec = W_nmf * H_nmf
 
+# Run robust NMF
+W_robust, H_robust, history_robust = robust_nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
+
 ```
 
 ---

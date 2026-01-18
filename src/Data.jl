@@ -1,18 +1,9 @@
-module Data
-
 using Random, LinearAlgebra, Statistics
 using FileIO: load
 using ImageIO
 using Images: channelview, colorview
 using ColorTypes: Gray
 using Base: basename
-
-export
-generate_synthetic_data, 
-add_gaussian_noise!, 
-add_sparse_outliers!, 
-normalize_nonnegative!, 
-load_image_folder
 
 
 """
@@ -317,4 +308,3 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png",
 end
 
 
-end  # module Data
