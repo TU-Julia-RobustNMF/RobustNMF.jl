@@ -4,11 +4,11 @@ using Statistics
 using LinearAlgebra
 
 # Setting up output directory for saving plots
-output_dir = "output_plots"
+output_dir = "output_plots_comparison"
 mkpath(output_dir)
 
 println("="^70)
-println("RobustNMF.jl Visualization Demo")
+println("RobustNMF.jl - Standard vs Robust NMF Comparison")
 println("="^70)
 println()
 
@@ -32,186 +32,55 @@ X_outliers = copy(X_clean)
 add_sparse_outliers!(X_outliers; fraction=0.05, magnitude=5.0, seed=42)
 println("   • Sparse outliers (5% corrupted, magnitude=5.0)")
 
-X_heavy_noise = copy(X_clean)
-add_gaussian_noise!(X_heavy_noise; σ=0.3)
-println("   • Heavy Gaussian noise (σ=0.3)")
+X_heavy_outliers = copy(X_clean)
+add_sparse_outliers!(X_heavy_outliers; fraction=0.10, magnitude=10.0, seed=123)
+println("   • Heavy sparse outliers (10% corrupted, magnitude=10.0)")
 
 println()
 
-# Part 2: Run NMF on Different Datasets
+# Part 2: Run Different NMF Algorithms
 
-println("Part 2: Running NMF")
+println("Part 2: Running NMF Algorithms")
 println("-"^70)
 
 rank = 10
 maxiter = 500
 tol = 1e-5
 
-println("→ Running NMF on clean data...")
-W_clean, H_clean, hist_clean = nmf(X_clean; rank=rank, maxiter=maxiter, tol=tol)
-X_recon_clean = W_clean * H_clean
+# Standard NMF on different datasets
+println("→ Running Standard NMF (L2)...")
+println("   - On clean data...")
+W_std_clean, H_std_clean, hist_std_clean = nmf(X_clean; rank=rank, maxiter=maxiter, tol=tol)
 
-println("→ Running NMF on Gaussian noise data...")
-W_gauss, H_gauss, hist_gauss = nmf(X_gaussian; rank=rank, maxiter=maxiter, tol=tol)
-X_recon_gauss = W_gauss * H_gauss
+println("   - On Gaussian noise data...")
+W_std_gauss, H_std_gauss, hist_std_gauss = nmf(X_gaussian; rank=rank, maxiter=maxiter, tol=tol)
 
-println("→ Running NMF on outlier data...")
-W_outlier, H_outlier, hist_outlier = nmf(X_outliers; rank=rank, maxiter=maxiter, tol=tol)
-X_recon_outlier = W_outlier * H_outlier
+println("   - On outlier data (5%)...")
+W_std_outlier, H_std_outlier, hist_std_outlier = nmf(X_outliers; rank=rank, maxiter=maxiter, tol=tol)
 
-println("→ Running NMF on heavy noise data...")
-W_heavy, H_heavy, hist_heavy = nmf(X_heavy_noise; rank=rank, maxiter=maxiter, tol=tol)
-X_recon_heavy = W_heavy * H_heavy
+println("   - On heavy outlier data (10%)...")
+W_std_heavy, H_std_heavy, hist_std_heavy = nmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=tol)
+
+# Robust NMF on different datasets
+println("→ Running Robust NMF (IRLS weighted)...")
+println("   - On clean data...")
+W_rob_clean, H_rob_clean, hist_rob_clean = robust_nmf(X_clean; rank=rank, maxiter=maxiter, tol=tol, seed=42)
+
+println("   - On outlier data (5%)...")
+W_rob_outlier, H_rob_outlier, hist_rob_outlier = robust_nmf(X_outliers; rank=rank, maxiter=maxiter, tol=tol, seed=42)
+
+println("   - On heavy outlier data (10%)...")
+W_rob_heavy, H_rob_heavy, hist_rob_heavy = robust_nmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=tol, seed=42)
 
 println()
 
-# PART 3: Convergence Visualization
+# Part 3: Performance Evaluation
 
-println("Part 3: Convergence Analysis")
+println("Part 3: Quantitative Performance Metrics")
 println("-"^70)
 
-# Plot 1: Convergence comparison
-println("→ Creating convergence comparison plot...")
-p_conv = plot(1:length(hist_clean), hist_clean, 
-              label="Clean Data", lw=2, yscale=:log10,
-              xlabel="Iteration", ylabel="Frobenius Error (log scale)",
-              title="NMF Convergence: Effect of Noise",
-              legend=:topright, size=(800, 500))
-plot!(p_conv, 1:length(hist_gauss), hist_gauss, 
-      label="Gaussian Noise (σ=0.1)", lw=2)
-plot!(p_conv, 1:length(hist_outlier), hist_outlier, 
-      label="Sparse Outliers (5%)", lw=2)
-plot!(p_conv, 1:length(hist_heavy), hist_heavy, 
-      label="Heavy Noise (σ=0.3)", lw=2)
-
-savefig(p_conv, joinpath(output_dir, "01_convergence_comparison.png"))
-println("   ✓ Saved: 01_convergence_comparison.png")
-
-# Plot 2: Individual convergence plots
-println("→ Creating individual convergence plots...")
-p_conv_clean = plot_convergence(hist_clean; title="Convergence: Clean Data")
-savefig(p_conv_clean, joinpath(output_dir, "02_convergence_clean.png"))
-
-p_conv_noisy = plot_convergence(hist_gauss; title="Convergence: Noisy Data")
-savefig(p_conv_noisy, joinpath(output_dir, "03_convergence_noisy.png"))
-
-println("   ✓ Saved: 02_convergence_clean.png, 03_convergence_noisy.png")
-println()
-
-
-# PART 4: Basis Vectors Visualization
-
-println("Part 4: Basis Vectors (W) Visualization")
-println("-"^70)
-
-println("→ Visualizing learned basis vectors...")
-
-# Plot 3: Basis vectors from clean data
-p_basis_clean = plot_basis_vectors(W_clean; max_components=10,
-                                   title="Basis Vectors: Clean Data")
-savefig(p_basis_clean, joinpath(output_dir, "04_basis_clean.png"))
-println("   ✓ Saved: 04_basis_clean.png")
-
-# Plot 4: Basis vectors from noisy data
-p_basis_noisy = plot_basis_vectors(W_gauss; max_components=10,
-                                   title="Basis Vectors: Gaussian Noise")
-savefig(p_basis_noisy, joinpath(output_dir, "05_basis_noisy.png"))
-println("   ✓ Saved: 05_basis_noisy.png")
-
-# Plot 5: Basis vectors from outlier data
-p_basis_outlier = plot_basis_vectors(W_outlier; max_components=10,
-                                     title="Basis Vectors: Sparse Outliers")
-savefig(p_basis_outlier, joinpath(output_dir, "06_basis_outliers.png"))
-println("   ✓ Saved: 06_basis_outliers.png")
-
-# Plot 6: Basis vectors as images (10×10)
-p_basis_img = plot_basis_vectors(W_clean; img_shape=(10, 10), max_components=10,
-                                title="Basis Vectors as Images")
-savefig(p_basis_img, joinpath(output_dir, "07_basis_as_images.png"))
-println("   ✓ Saved: 07_basis_as_images.png")
-println()
-
-# PART 5: Activation Coefficients Visualization
-
-println("Part 5: Activation Coefficients (H) Visualization")
-println("-"^70)
-
-println("→ Visualizing activation coefficients...")
-
-# Plot 7: Activation coefficients from clean data
-p_act_clean = plot_activation_coefficients(H_clean; max_samples=8,
-                                          title="Activation Coefficients: Clean Data")
-savefig(p_act_clean, joinpath(output_dir, "08_activations_clean.png"))
-println("   ✓ Saved: 08_activations_clean.png")
-
-# Plot 8: Activation coefficients from noisy data
-p_act_noisy = plot_activation_coefficients(H_gauss; max_samples=8,
-                                          title="Activation Coefficients: Noisy Data")
-savefig(p_act_noisy, joinpath(output_dir, "09_activations_noisy.png"))
-println("   ✓ Saved: 09_activations_noisy.png")
-println()
-
-# Part 6: Reconstruction Visualization
-
-println("Part 6: Data Reconstruction Visualization")
-println("-"^70)
-
-println("→ Comparing original, noisy, and reconstructed data...")
-
-# Plot 9: Clean data reconstruction
-p_recon_clean = plot_reconstruction_comparison(X_clean, X_recon_clean; 
-                                              n_samples=6,
-                                              title="Reconstruction: Clean Data")
-savefig(p_recon_clean, joinpath(output_dir, "10_reconstruction_clean.png"))
-println("   ✓ Saved: 10_reconstruction_clean.png")
-
-# Plot 10: Noisy data reconstruction
-p_recon_noisy = plot_reconstruction_comparison(X_gaussian, X_recon_gauss;
-                                              n_samples=6,
-                                              title="Reconstruction: Gaussian Noise")
-savefig(p_recon_noisy, joinpath(output_dir, "11_reconstruction_gaussian.png"))
-println("   ✓ Saved: 11_reconstruction_gaussian.png")
-
-# Plot 11: Outlier data reconstruction
-p_recon_outlier = plot_reconstruction_comparison(X_outliers, X_recon_outlier;
-                                                n_samples=6,
-                                                title="Reconstruction: Sparse Outliers")
-savefig(p_recon_outlier, joinpath(output_dir, "12_reconstruction_outliers.png"))
-println("   ✓ Saved: 12_reconstruction_outliers.png")
-
-# Plot 12: Image reconstruction view
-p_img_recon = plot_image_reconstruction(X_clean, W_clean, H_clean, (10, 10);
-                                       n_images=5)
-savefig(p_img_recon, joinpath(output_dir, "13_image_reconstruction.png"))
-println("   ✓ Saved: 13_image_reconstruction.png")
-println()
-
-# Part 7: Summary Visualizations
-
-println("Part 7: Comprehensive Summary Plots")
-println("-"^70)
-
-println("→ Creating summary visualizations...")
-
-# Plot 13: Summary for clean data
-p_summary_clean = plot_nmf_summary(X_clean, W_clean, H_clean, hist_clean;
-                                  max_basis=9, max_samples=4)
-savefig(p_summary_clean, joinpath(output_dir, "14_summary_clean.png"))
-println("   ✓ Saved: 14_summary_clean.png")
-
-# Plot 14: Summary for noisy data
-p_summary_noisy = plot_nmf_summary(X_gaussian, W_gauss, H_gauss, hist_gauss;
-                                  max_basis=9, max_samples=4)
-savefig(p_summary_noisy, joinpath(output_dir, "15_summary_noisy.png"))
-println("   ✓ Saved: 15_summary_noisy.png")
-println()
-
-# Part 8: Quantitative Evaluation
-
-println("Part 8: Quantitative Performance Metrics")
-println("-"^70)
-
-function compute_metrics(X_orig, X_recon)
+function compute_metrics(X_orig, W, H)
+    X_recon = W * H
     error = X_orig - X_recon
     rmse = sqrt(mean(error.^2))
     mae = mean(abs.(error))
@@ -220,90 +89,175 @@ function compute_metrics(X_orig, X_recon)
     return (rmse=rmse, mae=mae, rel_error=rel_error, explained_var=explained_var)
 end
 
-println("\nReconstruction Quality Metrics:")
+println("\n📊 Reconstruction Quality on Clean Data:")
 println("-"^70)
 
-metrics_clean = compute_metrics(X_clean, X_recon_clean)
-println("Clean Data:")
-println("  RMSE:            $(round(metrics_clean.rmse, digits=6))")
-println("  MAE:             $(round(metrics_clean.mae, digits=6))")
-println("  Relative Error:  $(round(metrics_clean.rel_error*100, digits=2))%")
-println("  Explained Var:   $(round(metrics_clean.explained_var*100, digits=2))%")
+metrics_std_clean = compute_metrics(X_clean, W_std_clean, H_std_clean)
+metrics_rob_clean = compute_metrics(X_clean, W_rob_clean, H_rob_clean)
+
+println("Standard NMF (L2):")
+println("  RMSE:            $(round(metrics_std_clean.rmse, digits=6))")
+println("  MAE:             $(round(metrics_std_clean.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_std_clean.rel_error*100, digits=2))%")
 println()
 
-metrics_gauss = compute_metrics(X_gaussian, X_recon_gauss)
-println("Gaussian Noise (σ=0.1):")
-println("  RMSE:            $(round(metrics_gauss.rmse, digits=6))")
-println("  MAE:             $(round(metrics_gauss.mae, digits=6))")
-println("  Relative Error:  $(round(metrics_gauss.rel_error*100, digits=2))%")
-println("  Explained Var:   $(round(metrics_gauss.explained_var*100, digits=2))%")
+println("Robust NMF (IRLS):")
+println("  RMSE:            $(round(metrics_rob_clean.rmse, digits=6))")
+println("  MAE:             $(round(metrics_rob_clean.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_rob_clean.rel_error*100, digits=2))%")
 println()
 
-metrics_outlier = compute_metrics(X_outliers, X_recon_outlier)
-println("Sparse Outliers (5%):")
-println("  RMSE:            $(round(metrics_outlier.rmse, digits=6))")
-println("  MAE:             $(round(metrics_outlier.mae, digits=6))")
-println("  Relative Error:  $(round(metrics_outlier.rel_error*100, digits=2))%")
-println("  Explained Var:   $(round(metrics_outlier.explained_var*100, digits=2))%")
+println("\n📊 Performance on Outlier Data (5% outliers) - Compared to CLEAN:")
+println("-"^70)
+
+metrics_std_outlier = compute_metrics(X_clean, W_std_outlier, H_std_outlier)
+metrics_rob_outlier = compute_metrics(X_clean, W_rob_outlier, H_rob_outlier)
+
+println("Standard NMF (L2):")
+println("  RMSE:            $(round(metrics_std_outlier.rmse, digits=6))")
+println("  MAE:             $(round(metrics_std_outlier.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_std_outlier.rel_error*100, digits=2))%")
 println()
 
-metrics_heavy = compute_metrics(X_heavy_noise, X_recon_heavy)
-println("Heavy Noise (σ=0.3):")
-println("  RMSE:            $(round(metrics_heavy.rmse, digits=6))")
-println("  MAE:             $(round(metrics_heavy.mae, digits=6))")
-println("  Relative Error:  $(round(metrics_heavy.rel_error*100, digits=2))%")
-println("  Explained Var:   $(round(metrics_heavy.explained_var*100, digits=2))%")
+println("Robust NMF (IRLS):")
+println("  RMSE:            $(round(metrics_rob_outlier.rmse, digits=6))")
+println("  MAE:             $(round(metrics_rob_outlier.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_rob_outlier.rel_error*100, digits=2))%")
 println()
 
-# Plot 15: Metrics comparison
-println("→ Creating metrics comparison plot...")
-metrics_names = ["Clean", "Gaussian\n(σ=0.1)", "Outliers\n(5%)", "Heavy\n(σ=0.3)"]
-rmse_vals = [metrics_clean.rmse, metrics_gauss.rmse, metrics_outlier.rmse, metrics_heavy.rmse]
-mae_vals = [metrics_clean.mae, metrics_gauss.mae, metrics_outlier.mae, metrics_heavy.mae]
-rel_err_vals = [metrics_clean.rel_error, metrics_gauss.rel_error, 
-                metrics_outlier.rel_error, metrics_heavy.rel_error] .* 100
+improvement_5pct = (metrics_std_outlier.mae - metrics_rob_outlier.mae) / metrics_std_outlier.mae * 100
+println("🎯 Robust NMF improves MAE by: $(round(improvement_5pct, digits=1))%")
+println()
 
-p_metrics = plot(
-    bar(metrics_names, rmse_vals, title="RMSE", legend=false, color=:steelblue),
-    bar(metrics_names, mae_vals, title="MAE", legend=false, color=:coral),
-    bar(metrics_names, rel_err_vals, title="Relative Error (%)", 
-        legend=false, color=:seagreen),
+println("\n📊 Performance on Heavy Outlier Data (10% outliers) - Compared to CLEAN:")
+println("-"^70)
+
+metrics_std_heavy = compute_metrics(X_clean, W_std_heavy, H_std_heavy)
+metrics_rob_heavy = compute_metrics(X_clean, W_rob_heavy, H_rob_heavy)
+
+println("Standard NMF (L2):")
+println("  RMSE:            $(round(metrics_std_heavy.rmse, digits=6))")
+println("  MAE:             $(round(metrics_std_heavy.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_std_heavy.rel_error*100, digits=2))%")
+println()
+
+println("Robust NMF (IRLS):")
+println("  RMSE:            $(round(metrics_rob_heavy.rmse, digits=6))")
+println("  MAE:             $(round(metrics_rob_heavy.mae, digits=6))")
+println("  Relative Error:  $(round(metrics_rob_heavy.rel_error*100, digits=2))%")
+println()
+
+improvement_10pct = (metrics_std_heavy.mae - metrics_rob_heavy.mae) / metrics_std_heavy.mae * 100
+println("🎯 Robust NMF improves MAE by: $(round(improvement_10pct, digits=1))%")
+println()
+
+# Part 4: Visualizations
+
+println("Part 4: Creating Visualizations")
+println("-"^70)
+
+# Plot 1: Algorithm comparison on outlier data
+println("→ Creating convergence comparison plot...")
+p_conv = plot(title="NMF Convergence Comparison (5% Outliers)", 
+              xlabel="Iteration", ylabel="Error (MAE)",
+              legend=:topright, size=(900, 500), yscale=:log10)
+
+plot!(p_conv, 1:length(hist_std_outlier), hist_std_outlier, 
+      label="Standard NMF (L2)", lw=2, color=:red, linestyle=:solid)
+plot!(p_conv, 1:length(hist_rob_outlier), hist_rob_outlier, 
+      label="Robust NMF (IRLS)", lw=2, color=:blue, linestyle=:dash)
+
+savefig(p_conv, joinpath(output_dir, "01_convergence_comparison.png"))
+println("   ✓ Saved: 01_convergence_comparison.png")
+
+# Plot 2: Robustness comparison bar chart
+println("→ Creating robustness comparison...")
+methods = ["Standard\nL2", "Robust\nIRLS"]
+mae_clean = [metrics_std_clean.mae, metrics_rob_clean.mae]
+mae_5pct = [metrics_std_outlier.mae, metrics_rob_outlier.mae]
+mae_10pct = [metrics_std_heavy.mae, metrics_rob_heavy.mae]
+
+p_robust = plot(
+    bar(methods, mae_clean, title="MAE (Clean Data)", 
+        legend=false, color=:green, ylabel="MAE"),
+    bar(methods, mae_5pct, title="MAE (5% Outliers)", 
+        legend=false, color=:steelblue, ylabel="MAE"),
+    bar(methods, mae_10pct, title="MAE (10% Outliers)", 
+        legend=false, color=:coral, ylabel="MAE"),
     layout=(1, 3), size=(1200, 400),
-    plot_title="Reconstruction Error Metrics"
+    plot_title="Robustness to Outliers (Lower is Better)"
 )
 
-savefig(p_metrics, joinpath(output_dir, "16_metrics_comparison.png"))
-println("   ✓ Saved: 16_metrics_comparison.png")
+savefig(p_robust, joinpath(output_dir, "02_robustness_comparison.png"))
+println("   ✓ Saved: 02_robustness_comparison.png")
+
+# Plot 3: Basis vectors comparison
+println("→ Visualizing basis vectors...")
+p_basis_std = plot_basis_vectors(W_std_outlier; max_components=9,
+                                 title="Basis Vectors: Standard NMF (L2)")
+savefig(p_basis_std, joinpath(output_dir, "03_basis_standard.png"))
+
+p_basis_rob = plot_basis_vectors(W_rob_outlier; max_components=9,
+                                 title="Basis Vectors: Robust NMF (IRLS)")
+savefig(p_basis_rob, joinpath(output_dir, "04_basis_robust.png"))
+
+println("   ✓ Saved basis vector plots")
+
+# Plot 4: Reconstruction comparison
+println("→ Creating reconstruction comparisons...")
+X_recon_std = W_std_outlier * H_std_outlier
+X_recon_rob = W_rob_outlier * H_rob_outlier
+
+p_recon_std = plot_reconstruction_comparison(X_outliers, X_recon_std; 
+                                             n_samples=6,
+                                             title="Reconstruction: Standard NMF")
+savefig(p_recon_std, joinpath(output_dir, "05_recon_standard.png"))
+
+p_recon_rob = plot_reconstruction_comparison(X_outliers, X_recon_rob; 
+                                             n_samples=6,
+                                             title="Reconstruction: Robust NMF")
+savefig(p_recon_rob, joinpath(output_dir, "06_recon_robust.png"))
+
+println("   ✓ Saved reconstruction plots")
+
+# Plot 5: Convergence on different corruption levels
+println("→ Creating multi-condition convergence plot...")
+p_multi = plot(title="Convergence Under Different Noise Conditions", 
+               xlabel="Iteration", ylabel="Frobenius Error",
+               legend=:topright, size=(1000, 600), yscale=:log10)
+
+# Standard NMF
+plot!(p_multi, 1:length(hist_std_clean), hist_std_clean, 
+      label="Standard - Clean", lw=2, color=:green, linestyle=:solid)
+plot!(p_multi, 1:length(hist_std_outlier), hist_std_outlier, 
+      label="Standard - 5% Outliers", lw=2, color=:orange, linestyle=:solid)
+plot!(p_multi, 1:length(hist_std_heavy), hist_std_heavy, 
+      label="Standard - 10% Outliers", lw=2, color=:red, linestyle=:solid)
+
+# Robust NMF
+plot!(p_multi, 1:length(hist_rob_clean), hist_rob_clean, 
+      label="Robust - Clean", lw=2, color=:lightblue, linestyle=:dash)
+plot!(p_multi, 1:length(hist_rob_outlier), hist_rob_outlier, 
+      label="Robust - 5% Outliers", lw=2, color=:blue, linestyle=:dash)
+plot!(p_multi, 1:length(hist_rob_heavy), hist_rob_heavy, 
+      label="Robust - 10% Outliers", lw=2, color=:purple, linestyle=:dash)
+
+savefig(p_multi, joinpath(output_dir, "07_multi_convergence.png"))
+println("   ✓ Saved: 07_multi_convergence.png")
+
 println()
 
-# Part 9: Convergence Speed Comparison
-
-println("Part 9: Convergence Speed Analysis")
+# Summary table
+println("="^70)
+println("SUMMARY TABLE - MAE on Clean Data (Lower is Better)")
+println("="^70)
+println("Dataset          | Standard (L2) | Robust (IRLS) | Improvement")
 println("-"^70)
+println("Clean            | $(round(metrics_std_clean.mae, digits=4))      | $(round(metrics_rob_clean.mae, digits=4))      | -")
+println("5% Outliers      | $(round(metrics_std_outlier.mae, digits=4))      | $(round(metrics_rob_outlier.mae, digits=4))      | $(round(improvement_5pct, digits=1))%")
+println("10% Outliers     | $(round(metrics_std_heavy.mae, digits=4))      | $(round(metrics_rob_heavy.mae, digits=4))      | $(round(improvement_10pct, digits=1))%")
+println("="^70)
 
-println("\nConvergence Statistics:")
-println("-"^70)
-println("Clean Data:         $(length(hist_clean)) iterations")
-println("Gaussian Noise:     $(length(hist_gauss)) iterations")
-println("Sparse Outliers:    $(length(hist_outlier)) iterations")
-println("Heavy Noise:        $(length(hist_heavy)) iterations")
 println()
-
-# Plot 16: Convergence speed comparison
-p_conv_speed = bar(metrics_names, 
-                   [length(hist_clean), length(hist_gauss), 
-                    length(hist_outlier), length(hist_heavy)],
-                   xlabel="Dataset", ylabel="Iterations to Converge",
-                   title="Convergence Speed Comparison",
-                   legend=false, color=:purple, size=(600, 400))
-
-savefig(p_conv_speed, joinpath(output_dir, "17_convergence_speed.png"))
-println("→ Convergence speed comparison saved")
-println("   ✓ Saved: 17_convergence_speed.png")
-println()
-
-# To summarize:
-
 println("="^70)
 println("Demo Complete!")
-println("="^70)
