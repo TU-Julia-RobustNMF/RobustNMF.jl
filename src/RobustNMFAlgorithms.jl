@@ -10,7 +10,7 @@ Stops early when the relative change in mean absolute error falls below `tol`.
 
 Returns:
     W, H, history
-where history[k] = mean(abs.(X - W*H)) at iteration k.
+where history[k] = Frobenius reconstruction error at iteration k.
 """
 function robust_nmf(
     X::AbstractMatrix{<:Real};
@@ -53,8 +53,8 @@ function robust_nmf(
         denomW = (V .* (W * H)) * H' .+ eps_update
         W .*= numerW ./ denomW
 
-        # 6) Monitor robust objective, L1 mean error
-        err = mean(abs.(X .- (W * H)))
+        # 6) Monitor reconstruction error (Frobenius norm) for comparability with nmf
+        err = norm(X .- (W * H))
         history[iter] = err
         if abs(prev_err - err) / (prev_err + eps_conv) < tol
             history = history[1:iter]
