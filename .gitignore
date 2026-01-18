@@ -5,3 +5,7 @@
 /docs/Manifest*.toml
 /docs/build/
 .vscode/
+# Node / npm
+node_modules/
+package-lock.json
+package.json
