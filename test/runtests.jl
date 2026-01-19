@@ -1,7 +1,5 @@
 using Test
 using RobustNMF
-using Statistics
-using LinearAlgebra
 
 @testset "RobustNMF.jl Test Suite" begin
     
