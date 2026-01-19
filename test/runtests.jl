@@ -1,5 +1,6 @@
 using Test
 using RobustNMF
+using Statistics
 
 @testset "RobustNMF.jl Test Suite" begin
     
