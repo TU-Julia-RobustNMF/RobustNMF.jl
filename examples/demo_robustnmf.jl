@@ -263,15 +263,9 @@ println("SUMMARY TABLE - MAE on Clean Data (Lower is Better)")
 println("="^70)
 println("Dataset          | Standard (L2) | Robust (IRLS) | Difference")
 println("-"^70)
-@printf("Clean            | %.4f      | %.4f      | %.2f%%\n", 
-        metrics_std_clean.mae, metrics_rob_clean.mae,
-        (metrics_rob_clean.mae - metrics_std_clean.mae) / metrics_std_clean.mae * 100)
-@printf("5%% Outliers      | %.4f      | %.4f      | %.2f%%\n", 
-        metrics_std_outlier.mae, metrics_rob_outlier.mae,
-        (metrics_rob_outlier.mae - metrics_std_outlier.mae) / metrics_std_outlier.mae * 100)
-@printf("10%% Outliers     | %.4f      | %.4f      | %.2f%%\n", 
-        metrics_std_heavy.mae, metrics_rob_heavy.mae,
-        (metrics_rob_heavy.mae - metrics_std_heavy.mae) / metrics_std_heavy.mae * 100)
+println("Clean            | $(round(metrics_std_clean.mae, digits=4))      | $(round(metrics_rob_clean.mae, digits=4))      | -")
+println("5% Outliers      | $(round(metrics_std_outlier.mae, digits=4))      | $(round(metrics_rob_outlier.mae, digits=4))      | $(round(improvement_5pct, digits=1))%")
+println("10% Outliers     | $(round(metrics_std_heavy.mae, digits=4))      | $(round(metrics_rob_heavy.mae, digits=4))      | $(round(improvement_10pct, digits=1))%")
 println("="^70)
 
 println()
