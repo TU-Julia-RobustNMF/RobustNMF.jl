@@ -1,6 +1,7 @@
 using Test
 using RobustNMF
 using Plots
+using Statistics
 
 @testset "Plotting Functions" begin
     
