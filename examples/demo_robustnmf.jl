@@ -125,8 +125,13 @@ println("  MAE:             $(round(metrics_rob_outlier.mae, digits=6))")
 println("  Relative Error:  $(round(metrics_rob_outlier.rel_error*100, digits=2))%")
 println()
 
-improvement_5pct = (metrics_std_outlier.mae - metrics_rob_outlier.mae) / metrics_std_outlier.mae * 100
-println("🎯 Robust NMF improves MAE by: $(round(improvement_5pct, digits=1))%")
+if metrics_rob_outlier.mae < metrics_std_outlier.mae
+    improvement_5pct = (metrics_std_outlier.mae - metrics_rob_outlier.mae) / metrics_std_outlier.mae * 100
+    println("🎯 Robust NMF improves MAE by: $(round(improvement_5pct, digits=1))%")
+else
+    degradation_5pct = (metrics_rob_outlier.mae - metrics_std_outlier.mae) / metrics_std_outlier.mae * 100
+    println("⚠️  Robust NMF MAE is higher by: $(round(degradation_5pct, digits=1))%")
+end
 println()
 
 println("\n📊 Performance on Heavy Outlier Data (10% outliers) - Compared to CLEAN:")
@@ -147,8 +152,13 @@ println("  MAE:             $(round(metrics_rob_heavy.mae, digits=6))")
 println("  Relative Error:  $(round(metrics_rob_heavy.rel_error*100, digits=2))%")
 println()
 
-improvement_10pct = (metrics_std_heavy.mae - metrics_rob_heavy.mae) / metrics_std_heavy.mae * 100
-println("🎯 Robust NMF improves MAE by: $(round(improvement_10pct, digits=1))%")
+if metrics_rob_heavy.mae < metrics_std_heavy.mae
+    improvement_10pct = (metrics_std_heavy.mae - metrics_rob_heavy.mae) / metrics_std_heavy.mae * 100
+    println("🎯 Robust NMF improves MAE by: $(round(improvement_10pct, digits=1))%")
+else
+    degradation_10pct = (metrics_rob_heavy.mae - metrics_std_heavy.mae) / metrics_std_heavy.mae * 100
+    println("⚠️  Robust NMF MAE is higher by: $(round(degradation_10pct, digits=1))%")
+end
 println()
 
 # Part 4: Visualizations
@@ -223,7 +233,7 @@ println("   ✓ Saved reconstruction plots")
 # Plot 5: Convergence on different corruption levels
 println("→ Creating multi-condition convergence plot...")
 p_multi = plot(title="Convergence Under Different Noise Conditions", 
-               xlabel="Iteration", ylabel="Frobenius Error",
+               xlabel="Iteration", ylabel="Error (MAE/Frobenius)",
                legend=:topright, size=(1000, 600), yscale=:log10)
 
 # Standard NMF
@@ -251,11 +261,17 @@ println()
 println("="^70)
 println("SUMMARY TABLE - MAE on Clean Data (Lower is Better)")
 println("="^70)
-println("Dataset          | Standard (L2) | Robust (IRLS) | Improvement")
+println("Dataset          | Standard (L2) | Robust (IRLS) | Difference")
 println("-"^70)
-println("Clean            | $(round(metrics_std_clean.mae, digits=4))      | $(round(metrics_rob_clean.mae, digits=4))      | -")
-println("5% Outliers      | $(round(metrics_std_outlier.mae, digits=4))      | $(round(metrics_rob_outlier.mae, digits=4))      | $(round(improvement_5pct, digits=1))%")
-println("10% Outliers     | $(round(metrics_std_heavy.mae, digits=4))      | $(round(metrics_rob_heavy.mae, digits=4))      | $(round(improvement_10pct, digits=1))%")
+@printf("Clean            | %.4f      | %.4f      | %.2f%%\n", 
+        metrics_std_clean.mae, metrics_rob_clean.mae,
+        (metrics_rob_clean.mae - metrics_std_clean.mae) / metrics_std_clean.mae * 100)
+@printf("5%% Outliers      | %.4f      | %.4f      | %.2f%%\n", 
+        metrics_std_outlier.mae, metrics_rob_outlier.mae,
+        (metrics_rob_outlier.mae - metrics_std_outlier.mae) / metrics_std_outlier.mae * 100)
+@printf("10%% Outliers     | %.4f      | %.4f      | %.2f%%\n", 
+        metrics_std_heavy.mae, metrics_rob_heavy.mae,
+        (metrics_rob_heavy.mae - metrics_std_heavy.mae) / metrics_std_heavy.mae * 100)
 println("="^70)
 
 println()
