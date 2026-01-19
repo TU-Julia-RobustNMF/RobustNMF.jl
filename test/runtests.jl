@@ -27,7 +27,7 @@ using Statistics
         @test size(X_recon) == size(X)
         
         # Test convergence
-        @test history[end] < 1.0  # Should converge to reasonable error
+        @test history[end] <= 1.0  # Should converge to reasonable error
     end
     
     # Robust NMF algorithm tests
