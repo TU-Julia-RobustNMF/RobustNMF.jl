@@ -62,5 +62,61 @@ nmf,
 X_reconstruct,
 robust_nmf
 
+# The L2,1-norm is the row-wise L2 norms summed up. It is robust to outliers
+function l21norm(X)
+  return sum(norm.(eachrow(X)))
+end
+
+function update(X,F,G)
+  s = first(size(X))
+  d = [1 / norm(X[:,i]) - F*G[:,i] for i = 1:s]
+  D = Diagonal(d)
+
+  fn, fm = size(F)
+  Fnew = zeros(Real, fn, fm)
+  F1 = X * D * G'
+  F2 = F * G * D * G'
+  for j = 1:fn
+    for k = 1:fm
+      Fnew[j,k] = F[j,k] * (F1[j,k] / F2[j,k])
+    end
+  end
+
+  gn,gm = size(G)
+  Gnew = zeros(Real, gn, gm)
+  G1 = F' * X * D
+  G2 = F' * F * G * D
+  for k = 1:gn
+    for i = 1:gm
+      Gnew[k,i] = G[k,i] * (G1[k,i] / G2[k,i])
+    end
+  end
+
+  return Fnew, Gnew
+end
+
+# L2,1-NMF
+function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
+  m, n = size(X)
+        F = rand(m, rank)
+        G = rand(rank, n)
+        @assert minimum(X) >= 0 "X must be non-negative"
+
+  # update until convergence is reached or at most maxiter times
+  for iter = 1:maxiter
+    F,G = update(X,F,G)
+
+    # compute error
+    error = l21norm(X - F * G)
+
+    # break loop if sufficiently converged
+    if (error < tol)
+      return F,G
+    else
+      continue
+    end
+  end
+  return F,G
+end
 end # module RobustNMF
 
