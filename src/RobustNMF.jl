@@ -51,6 +51,7 @@ module RobustNMF
 include("Data.jl")
 include("StandardNMF.jl")
 include("RobustNMFAlgorithms.jl")
+include("Plotting.jl")
 
 export
 generate_synthetic_data,
@@ -60,7 +61,13 @@ normalize_nonnegative!,
 load_image_folder,
 nmf,
 X_reconstruct,
-robust_nmf
+l21_nmf,
+l21norm,
+l21_update,
+robust_nmf,
+plot_basis_vectors, plot_activation_coefficients, 
+plot_reconstruction_comparison, plot_convergence,
+plot_nmf_summary, plot_image_reconstruction
 
 end # module RobustNMF
 
