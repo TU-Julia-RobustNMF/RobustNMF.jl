@@ -2,15 +2,6 @@ using Plots
 using LinearAlgebra
 using Statistics
 
-export 
-    plot_basis_vectors,
-    plot_activation_coefficients,
-    plot_reconstruction_comparison,
-    plot_convergence,
-    plot_nmf_summary,
-    plot_image_reconstruction
-
-
 """
     plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16, 
                       title::String="Basis Vectors (W)", layout=nothing)
@@ -388,6 +379,3 @@ function plot_image_reconstruction(X::AbstractMatrix, W::AbstractMatrix, H::Abst
          plot_title="Image Reconstruction Quality",
          size=(900, 300 * nrows))
 end
-
-
-end  # module Plotting
