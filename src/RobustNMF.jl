@@ -60,9 +60,10 @@ normalize_nonnegative!,
 load_image_folder,
 nmf,
 X_reconstruct,
-robust_nmf,
 l21_nmf,
-l21norm
+l21norm,
+l21_update,
+robust_nmf
 
 include("Plotting.jl")
 export plot_basis_vectors, plot_activation_coefficients, 
