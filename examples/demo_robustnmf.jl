@@ -215,11 +215,13 @@ println("   ✓ Saved: 02_robustness_comparison.png")
 println("→ Visualizing basis vectors...")
 p_basis_std = plot_basis_vectors(W_std_outlier; max_components=9,
                                  title="Basis Vectors: Standard NMF (L2)")
+sleep(0.1)
 savefig(p_basis_std, joinpath(output_dir, "03_basis_standard.png"))
 closeall()  # Close plots to avoid Qt warnings
 
 p_basis_rob = plot_basis_vectors(W_rob_outlier; max_components=9,
                                  title="Basis Vectors: Robust NMF (L2,1)")
+sleep(0.1)
 savefig(p_basis_rob, joinpath(output_dir, "04_basis_robust.png"))
 closeall()
 
@@ -233,12 +235,14 @@ X_recon_rob = W_rob_outlier * H_rob_outlier
 p_recon_std = plot_reconstruction_comparison(X_outliers, X_recon_std; 
                                              n_samples=6,
                                              title="Reconstruction: Standard NMF")
+sleep(0.1)
 savefig(p_recon_std, joinpath(output_dir, "05_recon_standard.png"))
 closeall()
 
 p_recon_rob = plot_reconstruction_comparison(X_outliers, X_recon_rob; 
                                              n_samples=6,
                                              title="Reconstruction: Robust NMF")
+sleep(0.1)
 savefig(p_recon_rob, joinpath(output_dir, "06_recon_robust.png"))
 closeall()
 
@@ -265,7 +269,7 @@ plot!(p_multi, 1:length(hist_rob_outlier), hist_rob_outlier,
       label="Robust - 5% Outliers", lw=2, color=:blue, linestyle=:dash)
 plot!(p_multi, 1:length(hist_rob_heavy), hist_rob_heavy, 
       label="Robust - 10% Outliers", lw=2, color=:purple, linestyle=:dash)
-
+sleep(0.1)
 savefig(p_multi, joinpath(output_dir, "07_multi_convergence.png"))
 println("   ✓ Saved: 07_multi_convergence.png")
 
@@ -273,6 +277,7 @@ println("   ✓ Saved: 07_multi_convergence.png")
 println("→ Creating NMF summary plots...")
 p_summary_std = plot_nmf_summary(X_outliers, W_std_outlier, H_std_outlier, hist_std_outlier;
                                  max_basis=9, max_samples=4)
+sleep(0.1)
 savefig(p_summary_std, joinpath(output_dir, "08_summary_standard.png"))
 
 # Plot 7: NMF Summary for Robust NMF (using plot_nmf_summary)
