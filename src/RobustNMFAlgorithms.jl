@@ -2,82 +2,29 @@ using LinearAlgebra
 using Random
 using Statistics
 # L2,1-NMF
-function robust_nmf(
-    X::AbstractMatrix{<:Real};
-    rank::Int = 2,
-    maxiter::Int = 50,
-    tol::Float64 = 1e-4,
-    eps_weight::Float64 = 1e-2,
-    eps_update::Float64 = 1e-10,
-    seed::Int = 0
-)
-    @assert minimum(X) >= 0 "X must be non-negative"
-    @assert rank > 0 "rank must be positive"
-    @assert maxiter > 0 "maxiter must be positive"
+function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
+  m, n = size(X)
+        F = rand(m, rank)
+        G = rand(rank, n)
+        @assert minimum(X) >= 0 "X must be non-negative"
 
-    Random.seed!(seed)
+  # update until convergence is reached or at most maxiter times
+  for iter = 1:maxiter
+    F,G = update(X,F,G)
 
-    m, n = size(X)
-    
-    # Initialize with small positive random values
-    W = rand(m, rank) .* 0.5 .+ 0.1
-    H = rand(rank, n) .* 0.5 .+ 0.1
-    
-    # Normalize initial factors
-    for i in 1:rank
-        W[:, i] ./= (norm(W[:, i]) + eps_update)
+    # compute error
+    error = l21norm(X - F * G)
+
+    # break loop if sufficiently converged
+    if (error < tol)
+      return F,G
+    else
+      continue
     end
-
-    history = zeros(Float64, maxiter)
-    prev_err = Inf
-    eps_conv = eps(Float64)
-
-    for iter in 1:maxiter
-        # Current reconstruction
-        WH = W * H
-
-        # Compute Frobenius error for history
-        frob_err = norm(X - WH)
-        history[iter] = frob_err
-
-        # Compute residuals
-        R = X .- WH
-
-        # IRLS weights - downweight large residuals
-        abs_R = abs.(R)
-        V = 1.0 ./ (sqrt.(abs_R) .+ eps_weight)
-        
-        # Normalize weights to prevent numerical issues
-        V ./= (mean(V) + eps_conv)
-
-        # Weighted multiplicative update for H
-        numerH = W' * (V .* X)
-        denomH = W' * (V .* WH) .+ eps_update
-        H .*= numerH ./ denomH
-        
-        # Ensure non-negativity and prevent zeros
-        @. H = max(H, eps_update)
-
-        # Weighted multiplicative update for W
-        WH = W * H  # Recompute after H update
-        numerW = (V .* X) * H'
-        denomW = (V .* WH) * H' .+ eps_update
-        W .*= numerW ./ denomW
-        
-        # Ensure non-negativity and prevent zeros
-        @. W = max(W, eps_update)
-
-        # Check convergence
-        if abs(prev_err - frob_err) / (prev_err + eps_conv) < tol
-            history = history[1:iter]
-            break
-        end
-        prev_err = frob_err
-    end
-
-    return W, H, history
+  end
+  return F,G
 end
-
+end # module RobustNMF
 
 """
     l21norm(X)
