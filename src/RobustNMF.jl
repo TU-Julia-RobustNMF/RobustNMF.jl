@@ -60,7 +60,9 @@ normalize_nonnegative!,
 load_image_folder,
 nmf,
 X_reconstruct,
-robust_nmf
+robust_nmf,
+l21_nmf,
+l21norm
 
 include("Plotting.jl")
 using .Plotting
