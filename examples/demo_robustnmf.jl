@@ -269,6 +269,19 @@ plot!(p_multi, 1:length(hist_rob_heavy), hist_rob_heavy,
 savefig(p_multi, joinpath(output_dir, "07_multi_convergence.png"))
 println("   ✓ Saved: 07_multi_convergence.png")
 
+# Plot 6: NMF Summary for Standard NMF (using plot_nmf_summary)
+println("→ Creating NMF summary plots...")
+p_summary_std = plot_nmf_summary(X_outliers, W_std_outlier, H_std_outlier, hist_std_outlier;
+                                 max_basis=9, max_samples=4)
+savefig(p_summary_std, joinpath(output_dir, "08_summary_standard.png"))
+
+# Plot 7: NMF Summary for Robust NMF (using plot_nmf_summary)
+p_summary_rob = plot_nmf_summary(X_outliers, W_rob_outlier, H_rob_outlier, hist_rob_outlier;
+                                 max_basis=9, max_samples=4)
+savefig(p_summary_rob, joinpath(output_dir, "09_summary_robust.png"))
+
+println("   ✓ Saved NMF summary plots")
+
 println()
 
 # Summary table
