@@ -33,8 +33,6 @@ l21_nmf
 **Helper functions:**
 ```@docs
 l21norm
-l21_update
-robust_nmf
 ```
 
 ## Data Generation and Preprocessing
