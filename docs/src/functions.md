@@ -97,3 +97,21 @@ mae = mean(abs.(X - W*H))
 ```julia
 rel_error = norm(X - W*H) / norm(X)
 ```
+
+## Demo RobustNMF:
+To run the demo version of RobustNMF, it is better to run the following:
+```julia
+#Instantiate your package
+>julia Pkg.instantiate()
+
+#Run the following command to have the demo version of RobustNMF
+>julia include("examples/demo_robustnmf.jl")
+```
+Afterwards, you will see the plots that compare the StandardNMF and RobustNMF, <br>
+having also performance metrics such as RMSE and MAE.
+
+
+
+
+
+
