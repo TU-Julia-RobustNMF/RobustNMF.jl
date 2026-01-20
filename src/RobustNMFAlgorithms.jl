@@ -24,7 +24,6 @@ function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
   end
   return F,G
 end
-end # module RobustNMF
 
 """
     l21norm(X)
