@@ -14,15 +14,22 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
         m, n = size(X)
         W = rand(m, rank)
         H = rand(rank, n)
+        err = norm(X - W * H)
 ```
 **W** - Basic Matrix (m x rank) <br>
 **H** - Coefficient Matrix (rank x n)<br>
-**history** - Vector of Frobenius errors at each iteration
 
 ### 2. RobustNMF - L2,1-norm:
 RobustNMF with L2,1-norm approach is best for sample-wised outliers and data with corrupted samples (entire columns)
-
-
+```julia
+function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
+m, n = size(X)
+        F = rand(m, rank)
+        G = rand(rank, n)
+        error = l21norm(X - F * G)
+```
+**F** - Basic Matrix (m x rank) <br>
+**G** - Coefficient Matrix (rank x n)<br>
 ```@autodocs
 Modules = [RobustNMF]
 ```
