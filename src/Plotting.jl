@@ -1,5 +1,3 @@
-module Plotting
-
 using Plots
 using LinearAlgebra
 using Statistics
