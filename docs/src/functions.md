@@ -24,7 +24,7 @@ RobustNMF with L2,1-norm approach is best for sample-wise outliers and data with
 
 ```@docs
 l21_nmf
-l21_update
+update
 ```
 
 **Returns:**
