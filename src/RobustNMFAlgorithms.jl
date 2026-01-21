@@ -68,7 +68,7 @@ algorithm robust to sample-wise (column-wise) outliers.
 - `F_new::Matrix{Float64}`: Updated basis matrix
 - `G_new::Matrix{Float64}`: Updated coefficient matrix
 """
-function l21_update(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix; 
+function update(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix; 
                     eps_update::Float64=1e-10)
     
     m, n = size(X)
