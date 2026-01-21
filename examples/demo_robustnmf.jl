@@ -6,10 +6,55 @@ using LinearAlgebra, Statistics
 m, n, r = 60, 50, 5
 X, W_true, H_true = generate_synthetic_data(m, n; rank=r, seed=1)
 
-# Corrupt data (favor robust NMF with sparse, strong outliers)
-X_noisy = copy(X)
-add_gaussian_noise!(X_noisy; sigma=0.02, clip_at_zero=true)
-add_sparse_outliers!(X_noisy; fraction=0.01, magnitude=8.0, seed=1)
+# Choose noise configuration interactively
+println("=" ^ 70)
+println("RobustNMF Demo - Noise Configuration")
+println("=" ^ 70)
+println("\nAvailable noise configurations:")
+println("  [1] Balanced: More Gaussian noise, fewer outliers")
+println("      → Both algorithms perform similarly")
+println("      → Shows that Robust NMF is not always superior")
+println()
+println("  [2] Outlier-heavy: Less Gaussian noise, strong sparse outliers")
+println("      → Robust NMF has clear advantage (~30-50% better)")
+println("      → Shows the strength of L1-based robust approach")
+println()
+print("Enter your choice [1 or 2] (default: 1): ")
+
+user_input = readline()
+
+# Parse input with error handling
+noise_config = 1  # Initialize with default
+try
+    global noise_config = isempty(user_input) ? 1 : parse(Int, user_input)
+    # Validate input
+    if !(noise_config in [1, 2])
+        println("⚠ Invalid choice. Using default config 1 (Balanced)")
+        global noise_config = 1
+    end
+catch
+    println("⚠ Invalid input. Using default config 1 (Balanced)")
+    global noise_config = 1
+end
+
+println("\nUsing config $noise_config: $(noise_config == 1 ? "Balanced" : "Outlier-heavy")")
+println("=" ^ 70)
+println()
+
+if noise_config == 1
+    # Pure Gaussian noise: NO outliers at all
+    # Standard NMF should perform better (L2 is MLE for Gaussian)
+    X_noisy = copy(X)
+    add_gaussian_noise!(X_noisy; sigma=0.12, clip_at_zero=true)  # Moderate Gaussian noise
+    # NO outliers! Standard NMF should be equal or slightly better
+    # (The small clipping effect may still slightly favor robust NMF)
+elseif noise_config == 2
+    # Outlier-heavy noise: sparse but strong outliers
+    # Robust NMF has clear advantage
+    X_noisy = copy(X)
+    add_gaussian_noise!(X_noisy; sigma=0.02, clip_at_zero=true)
+    add_sparse_outliers!(X_noisy; fraction=0.01, magnitude=8.0, seed=1)
+end
 
 # Factorizations
 W_std, H_std, hist_std = nmf(X_noisy; rank=r, maxiter=200, tol=1e-5)
@@ -24,10 +69,27 @@ err_rob_frob = norm(X .- X_rec_rob)
 err_std_mae = mean(abs.(X .- X_rec_std))
 err_rob_mae = mean(abs.(X .- X_rec_rob))
 
-println("=== Final Reconstruction Errors vs. Clean X ===")
+println("\n=== Final Reconstruction Errors vs. Clean X ===")
+println("Noise config: $noise_config ($(noise_config == 1 ? "Pure Gaussian" : "Outlier-heavy"))")
 println("Standard NMF  - Frobenius: $(round(err_std_frob, digits=3)), MAE: $(round(err_std_mae, digits=4))")
 println("Robust NMF    - Frobenius: $(round(err_rob_frob, digits=3)), MAE: $(round(err_rob_mae, digits=4))")
-println("Improvement   - Frobenius: $(round((1 - err_rob_frob/err_std_frob)*100, digits=1))%, MAE: $(round((1 - err_rob_mae/err_std_mae)*100, digits=1))%")
+
+# Calculate improvement (can be negative if Robust is worse)
+improvement_frob = (1 - err_rob_frob/err_std_frob)*100
+improvement_mae = (1 - err_rob_mae/err_std_mae)*100
+improvement_sign_frob = improvement_frob >= 0 ? "better" : "worse"
+improvement_sign_mae = improvement_mae >= 0 ? "better" : "worse"
+
+println("Robust vs Std - Frobenius: $(round(abs(improvement_frob), digits=1))% $improvement_sign_frob, MAE: $(round(abs(improvement_mae), digits=1))% $improvement_sign_mae")
+println("\nExpected behavior:")
+if noise_config == 1
+    println("  Config 1: Standard NMF should perform equal or slightly better")
+    println("  Pure Gaussian noise → L2 (Frobenius) is Maximum Likelihood Estimator")
+    println("  Robust NMF has NO advantage without outliers")
+else
+    println("  Config 2: Robust NMF should significantly outperform (~30-50% better)")
+    println("  Strong outliers favor L1 objective used by Robust NMF")
+end
 
 # Plot output directory
 plot_dir = "plots"
