@@ -170,7 +170,7 @@ function l21_nmf(X::AbstractMatrix{<:Real};
     # Iterative updates
     for iter in 1:maxiter
         # Perform one L2,1-NMF update
-        F, G = l21_update(X, F, G)
+        F, G = update(X, F, G)
         
         # Compute L2,1-norm error
         error = l21norm(X - F * G)
