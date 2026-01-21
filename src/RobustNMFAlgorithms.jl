@@ -49,7 +49,7 @@ end
 
 
 """
-    l21_update(X, F, G; eps_update=1e-10)
+    update(X, F, G; eps_update=1e-10)
 
 Perform one iteration of L2,1-NMF multiplicative updates.
 
