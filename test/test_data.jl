@@ -70,11 +70,25 @@ end
         save(joinpath(dir, "img1.png"), img1)
         save(joinpath(dir, "img2.png"), img2)
 
-        X, (h, w), filenames = load_image_folder(dir; pattern=".png", normalize=false)
+        X_raw, (h, w), filenames = load_image_folder(dir; pattern=".png", normalize=false)
+        X_norm, _, _             = load_image_folder(dir; pattern=".png", normalize=true)
 
         @test (h, w) == (4, 4)
-        @test size(X) == (16, 2)  # 4×4 pixels, 2 images
+        @test size(X_raw) == (16, 2)  # 4×4 pixels, 2 images
         @test length(filenames) == 2
+
+        # normalization tests
+        @test minimum(X_norm) ≥ 0.0
+        @test maximum(X_norm) ≈ 1.0
+        @test X_norm != X_raw
+    end
+
+    mktempdir() do dir
+        # Directory exists but contains no matching filenames
+        err = @test_throws ErrorException load_image_folder(dir; pattern=".png", normalize=false)
+
+        # Verify the error message includes the patter + dir
+        @test occursin("No files matching pattern '.png' found", sprint(showerror, err.value))
     end
 
 end
