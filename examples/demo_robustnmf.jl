@@ -68,15 +68,15 @@ println("     Converged in $(length(hist_std_heavy)) iterations")
 # L2,1-NMF (Robust) on different datasets
 println("→ Running L2,1-NMF (Robust)...")
 println("   - On clean data...")
-W_rob_clean, H_rob_clean, hist_rob_clean = l21_nmf(X_clean; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
+W_rob_clean, H_rob_clean, hist_rob_clean = robustnmf(X_clean; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
 println("     Converged in $(length(hist_rob_clean)) iterations")
 
 println("   - On outlier data (5%)...")
-W_rob_outlier, H_rob_outlier, hist_rob_outlier = l21_nmf(X_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
+W_rob_outlier, H_rob_outlier, hist_rob_outlier = robustnmf(X_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
 println("     Converged in $(length(hist_rob_outlier)) iterations")
 
 println("   - On heavy outlier data (10%)...")
-W_rob_heavy, H_rob_heavy, hist_rob_heavy = l21_nmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
+W_rob_heavy, H_rob_heavy, hist_rob_heavy = robustmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
 println("     Converged in $(length(hist_rob_heavy)) iterations")
 
 println()

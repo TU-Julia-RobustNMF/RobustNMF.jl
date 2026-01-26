@@ -23,7 +23,7 @@ nmf
 RobustNMF with L2,1-norm approach is best for sample-wise outliers and data with corrupted samples (entire columns).
 
 ```@docs
-l21_nmf
+robustnmf
 update
 ```
 

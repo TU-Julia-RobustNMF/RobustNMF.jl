@@ -1,30 +1,6 @@
 using LinearAlgebra
 using Random
 using Statistics
-# L2,1-NMF
-function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
-  m, n = size(X)
-        F = rand(m, rank)
-        G = rand(rank, n)
-        @assert minimum(X) >= 0 "X must be non-negative"
-
-  # update until convergence is reached or at most maxiter times
-  for iter = 1:maxiter
-    F,G = update(X,F,G)
-
-    # compute error
-    error = l21norm(X - F * G)
-
-    # break loop if sufficiently converged
-    if (error < tol)
-      return F,G
-    else
-      continue
-    end
-  end
-  return F,G
-end
-
 """
     l21norm(X)
 
@@ -116,7 +92,7 @@ end
 
 
 """
-    l21_nmf(X; rank=10, maxiter=500, tol=1e-4, seed=nothing)
+    robustnmf(X; rank=10, maxiter=500, tol=1e-4, seed=nothing)
 
 L2,1-Norm Regularized Non-negative Matrix Factorization.
 
@@ -140,48 +116,29 @@ to sample-wise outliers (entire corrupted columns in X).
 # Examples
 ```julia
 X = rand(50, 30)
-F, G, hist = l21_nmf(X; rank=5, maxiter=200)
+F, G, hist = robustnmf(X; rank=5, maxiter=200)
 ```
 """
-function l21_nmf(X::AbstractMatrix{<:Real}; 
-                 rank::Int=10, 
-                 maxiter::Int=500, 
-                 tol::Float64=1e-4,
-                 seed::Union{Int,Nothing}=nothing)
-    
-    @assert minimum(X) >= 0 "X must be non-negative"
-    @assert rank > 0 "rank must be positive"
-    @assert maxiter > 0 "maxiter must be positive"
-    
-    # Set random seed if provided
-    if seed !== nothing
-        Random.seed!(seed)
+# L2,1-RobustNMF
+function robustnmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4)
+  m, n = size(X)
+        F = rand(m, rank)
+        G = rand(rank, n)
+        @assert minimum(X) >= 0 "X must be non-negative"
+
+  # update until convergence is reached or at most maxiter times
+  for iter = 1:maxiter
+    F,G = update(X,F,G)
+
+    # compute error
+    error = l21norm(X - F * G)
+
+    # break loop if sufficiently converged
+    if (error < tol)
+      return F,G
+    else
+      continue
     end
-    
-    m, n = size(X)
-    
-    # Initialize F and G with random non-negative values
-    F = rand(m, rank) .* 0.5 .+ 0.1
-    G = rand(rank, n) .* 0.5 .+ 0.1
-    
-    # Track convergence history
-    history = zeros(Float64, maxiter)
-    
-    # Iterative updates
-    for iter in 1:maxiter
-        # Perform one L2,1-NMF update
-        F, G = update(X, F, G)
-        
-        # Compute L2,1-norm error
-        error = l21norm(X - F * G)
-        history[iter] = error
-        
-        # Check convergence
-        if error < tol
-            history = history[1:iter]
-            break
-        end
-    end
-    
-    return F, G, history
+  end
+  return F,G
 end

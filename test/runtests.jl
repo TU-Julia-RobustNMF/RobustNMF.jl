@@ -40,8 +40,8 @@ using Statistics  # Add this import for mean()
         X_outliers = copy(X_clean)
         add_sparse_outliers!(X_outliers; fraction=0.1, magnitude=5.0, seed=99)
         
-        # Testing l21_nmf function
-        F, G, history = l21_nmf(X_outliers; rank=r, maxiter=200, seed=99)
+        # Testing robustnmf function
+        F, G, history = robustnmf(X_outliers; rank=r, maxiter=200, seed=99)
         
         @test size(F) == (m, r)
         @test size(G) == (r, n)
@@ -61,7 +61,7 @@ using Statistics  # Add this import for mean()
         @test typeof(l21_val) == Float64
         
         # Testing that L2,1-NMF works on clean data too
-        F_clean, G_clean, hist_clean = l21_nmf(X_clean; rank=r, maxiter=100, seed=99)
+        F_clean, G_clean, hist_clean = robustnmf(X_clean; rank=r, maxiter=100, seed=99)
         @test size(F_clean) == (m, r)
         @test size(G_clean) == (r, n)
         
