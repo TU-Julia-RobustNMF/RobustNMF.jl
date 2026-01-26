@@ -76,7 +76,7 @@ W_rob_outlier, H_rob_outlier, hist_rob_outlier = robustnmf(X_outliers; rank=rank
 println("     Converged in $(length(hist_rob_outlier)) iterations")
 
 println("   - On heavy outlier data (10%)...")
-W_rob_heavy, H_rob_heavy, hist_rob_heavy = robustmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
+W_rob_heavy, H_rob_heavy, hist_rob_heavy = robustnmf(X_heavy_outliers; rank=rank, maxiter=maxiter, tol=1e-3, seed=42)
 println("     Converged in $(length(hist_rob_heavy)) iterations")
 
 println()
