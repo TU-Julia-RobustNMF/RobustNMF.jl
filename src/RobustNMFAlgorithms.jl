@@ -119,7 +119,7 @@ X = rand(50, 30)
 F, G, hist = robustnmf(X; rank=5, maxiter=200)
 ```
 """
-# L2,1-RobustNMF
+#RobustNMF function
 function robustnmf(X::AbstractMatrix{<:Real}; 
                  rank::Int=10, 
                  maxiter::Int=500, 
