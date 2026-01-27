@@ -102,9 +102,8 @@ end
     println("Running Visualization Demo")
     println("="^60)
     
-    # Create output directory for plots
-    output_dir = joinpath(@__DIR__, "test_plots")
-    mkpath(output_dir)
+    # Create output directory for plots in a writable temp location
+    output_dir = mktempdir()
     
     # Generate synthetic data with noise
     println("\n1. Generating synthetic data...")
