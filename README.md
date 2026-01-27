@@ -47,12 +47,11 @@ The package provides:
 
 ## Installation
 
-Clone the repository and activate the local environment:
+Install via the Julia package manager using the Git URL (since the package is not registered):
 
 ```julia
 ]
-activate .
-instantiate
+add https://github.com/TU-Julia-RobustNMF/RobustNMF.jl.git
 ```
 
 Julia version: `1.11` (see `Project.toml`).
