@@ -43,6 +43,19 @@ end
 end
 
 
+@testset "add_sparse_outliers!" begin
+    X = zeros(10, 10)
+    add_sparse_outliers!(X; fraction=0.5, magnitude=5.0, seed=1)
+
+    # At least one entry should be corrupted (positive)
+    @test count(>(0.0), X) > 0
+
+    # With the same seed, corruption should be reproducible
+    Y = zeros(10, 10)
+    add_sparse_outliers!(Y; fraction=0.5, magnitude=5.0, seed=1)
+    @test X == Y
+end
+
 @testset "normalize_nonnegative!" begin
     
     # Without rescaling
