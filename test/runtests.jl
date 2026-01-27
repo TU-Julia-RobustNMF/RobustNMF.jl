@@ -54,6 +54,7 @@ using Statistics  # Add this import for mean()
         X_recon = F * G
         @test size(X_recon) == size(X_outliers)
         
+        # QUESTION: function not used? just in example in RobustNMFAlgorithms
         # Testing l21norm function
         test_matrix = rand(10, 5)
         l21_val = l21norm(test_matrix)

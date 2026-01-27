@@ -60,13 +60,13 @@ add_sparse_outliers!,
 normalize_nonnegative!,
 load_image_folder,
 nmf,
-X_reconstruct,
 robustnmf,
-l21norm,
+l21norm, 
 update,
 plot_basis_vectors, plot_activation_coefficients, 
 plot_reconstruction_comparison, plot_convergence,
 plot_nmf_summary, plot_image_reconstruction
 
+#QUESTION l21norm not used? just in example in RobustNMFAlgorithms
 end # module RobustNMF
 

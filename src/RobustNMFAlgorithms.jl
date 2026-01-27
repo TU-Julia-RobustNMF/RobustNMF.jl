@@ -23,7 +23,7 @@ function l21norm(X::AbstractMatrix)
     return sum(norm(X[:, i]) for i in 1:size(X, 2))
 end
 
-# QUESTION: Example not adapted to new name?
+# QUESTION: Example not adapted to new name? What is that?
 
 
 """
