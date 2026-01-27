@@ -23,6 +23,8 @@ function l21norm(X::AbstractMatrix)
     return sum(norm(X[:, i]) for i in 1:size(X, 2))
 end
 
+# QUESTION: Example not adapted to new name? What is that?
+
 
 """
     update(X, F, G; eps_update=1e-10)
@@ -69,7 +71,9 @@ function update(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
             F_new[j, k] = F[j, k] * (F1[j, k] / F2[j, k])
         end
     end
-    
+    # QUESTION: why not F_new = F .* (F1 ./ F2)
+
+
     # Ensure non-negativity
     @. F_new = max(F_new, eps_update)
     
@@ -83,6 +87,8 @@ function update(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
             G_new[k, i] = G[k, i] * (G1[k, i] / G2[k, i])
         end
     end
+# QUESTION: why not G_new = G .* (G1 ./ G2)
+
     
     # Ensure non-negativity
     @. G_new = max(G_new, eps_update)
@@ -153,7 +159,7 @@ function robustnmf(X::AbstractMatrix{<:Real};
         history[iter] = error
         
         # Check convergence
-        if error < tol
+        if error < tol # QUESTION: why not relative change: abs(prev_err - err) / (prev_err + ϵ) < tol
             history = history[1:iter]
             break
         end
