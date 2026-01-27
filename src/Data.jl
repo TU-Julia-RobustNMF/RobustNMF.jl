@@ -44,14 +44,11 @@ true
 function generate_synthetic_data(m::Int, n::Int; rank::Int=10, 
     noise_level::Float64=0.0, seed=nothing)
     
-    # Set RNG seed only if provided
-    if seed !== nothing
-        Random.seed!(seed)
-    end
+    rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
     # Sample non-negative factors W and H from Uniform(0,1)
-    W = rand(m, rank)
-    H = rand(rank, n)
+    W = rand(rng, m, rank)
+    H = rand(rng, rank, n)
 
     # Construct non-negative data matrix
     X = W * H
@@ -59,7 +56,7 @@ function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
     # Optionally add Gaussian noise and clip at 0.0
     if noise_level > 0
         noise = similar(X)          # same size and element type as X
-        randn!(noise)               # fill with Gaussian noise N(0,1)
+        randn!(rng, noise)          # fill with Gaussian noise N(0,1)
         X .+= noise_level .* noise  # add scaled noise
         @. X = max(X, 0.0)          # clip negatives to 0.0
     end
@@ -118,6 +115,28 @@ function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::B
 end
 
 
+# function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true, seed=nothing)
+    
+#     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
+
+#     # Allocate temporary noise buffer with same size/type as X
+#     noise = similar(X)
+
+#     # Fill noise with N(0, 1) samples and scale by σ
+#     randn!(rng, noise)
+#     noise .*= σ           
+
+#     # Add noise to X in-place
+#     X .+= noise        
+    
+#     # Optionally enforce non-negativity by clipping at 0.0
+#     if clip_at_zero
+#         @. X = max(X, 0.0)
+#     end
+    
+#     return X
+# end 
+
 """
 
     add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
@@ -153,10 +172,7 @@ true
 function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
     seed=nothing)
 
-    # Set RNG seed only if provided
-    if seed !== nothing
-        Random.seed!(seed)
-    end
+    rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
     # Determine how many entries to corrupt
     m, n = size(X)
@@ -164,10 +180,10 @@ function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitu
     k = max(1, round(Int, fraction * total))
 
     # Sample k random linear indices into X 4×4=16
-    idx = rand(1:total, k)
+    idx = rand(rng, 1:total, k)
 
     # Add large positive outliers at these positions
-    X[idx] .+= magnitude .* rand(k)
+    X[idx] .+= magnitude .* rand(rng, k)
     
     return X
 end
@@ -223,7 +239,7 @@ end
 
 """
 
-    load_image_folder(dir::AbstractString; pattern::AbstractString="*.png", normalize::Bool=true)
+    load_image_folder(dir::AbstractString; pattern::AbstractString=".png", normalize::Bool=true)
 
 Load all images in `dir` whose filenames match `pattern`, convert them to grayscale if needed,
 flatten them, and stack them as columns of a data matrix `X`.
@@ -254,10 +270,12 @@ in `[0, 1]`.
 julia> # X, size, names = load_image_folder("faces/")
 ```
 """
-function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png", normalize::Bool=true)
+function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", normalize::Bool=true)
 
-    # add condition to check if directory exists
-    # ------------------------------------------
+    # Check if directory exists
+    if !isdir(dir)
+        error("Directory '$dir' does not exist or is not a directory")
+    end
 
     # List all files in the directory (with full paths)
     files = sort(readdir(dir; join=true))
@@ -270,15 +288,13 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString="*.png",
     end
 
     # Load and convert images to grayscale arrays
-    imgs = Any[]
+    imgs = Matrix{Float64}[]
     for f in files
         img = load(f)       # from FileIO/ImageIO
 
-        # Convert to grayscale and Float64
-        # colorview(Gray, img) ensures grayscale, channelview gives a 2D array
-        img_gray = float.(channelview(colorview(Gray, img)))
-
-        # img_gray is 2D (height, width)
+        # 2D grayscale Float64 matrix
+        img_gray = Float64.(Array(Gray.(img)))  
+        
         push!(imgs, img_gray)
     end
 
