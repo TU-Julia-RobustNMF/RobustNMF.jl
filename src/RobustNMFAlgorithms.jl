@@ -1,6 +1,7 @@
 using LinearAlgebra
 using Random
-using Statistics
+
+
 """
     l21norm(X)
 
@@ -22,8 +23,6 @@ l21norm(X)  # Returns norm([1,3]) + norm([2,4])
 function l21norm(X::AbstractMatrix)
     return sum(norm(X[:, i]) for i in 1:size(X, 2))
 end
-
-# QUESTION: Example not adapted to new name? What is that?
 
 
 """
@@ -98,34 +97,17 @@ end
 
 
 """
-    robustnmf(X; rank=10, maxiter=500, tol=1e-4, seed=nothing)
+    robustnmf_l21(X; rank=10, maxiter=500, tol=1e-4, seed=nothing)
 
 L2,1-Norm Regularized Non-negative Matrix Factorization.
 
 Minimizes: ||X - FG||_{2,1} where the L2,1-norm promotes robustness
-to sample-wise outliers (entire corrupted columns in X).
+to sample-wise outliers (entire corrupted columns in `X`).
 
-# Arguments
-- `X::AbstractMatrix{<:Real}`: Non-negative data matrix (m × n)
-
-# Keyword Arguments
-- `rank::Int=10`: Number of latent components
-- `maxiter::Int=500`: Maximum iterations
-- `tol::Float64=1e-4`: Convergence tolerance (absolute error threshold)
-- `seed::Union{Int,Nothing}=nothing`: Random seed for reproducibility
-
-# Returns
-- `F::Matrix{Float64}`: Basis matrix (m × rank)
-- `G::Matrix{Float64}`: Coefficient matrix (rank × n)
-- `history::Vector{Float64}`: L2,1-norm error at each iteration
-
-# Examples
-```julia
-X = rand(50, 30)
-F, G, hist = robustnmf(X; rank=5, maxiter=200)
-```
+NOTE: The course PDF for this project specifies robust NMF via **L1**, **Huber**, or **Itakura-Saito**, 
+we keep this implementation temporarily to avoid breaking existing code during the migration.
 """
-function robustnmf(X::AbstractMatrix{<:Real}; 
+function robustnmf_l21(X::AbstractMatrix{<:Real}; 
                  rank::Int=10, 
                  maxiter::Int=500, 
                  tol::Float64=1e-4,
@@ -166,3 +148,266 @@ function robustnmf(X::AbstractMatrix{<:Real};
     end
     return F, G, history
 end
+
+
+"""
+    robustnmf_huber(X; rank=10, maxiter=500, tol=1e-4, delta=1.0, seed=nothing)
+
+Implements a robust NMF variant using the Huber loss on the reconstruction residuals:
+    R = X - W*H
+
+Huber loss (element-wise) with threshold δ:
+- if |r| ≤ δ: 0.5 * r^2
+- else:       δ * (|r| - 0.5*δ)
+
+We optimize it using an IRLS-style weighted least squares approach:
+1) compute residual R
+2) compute weights Ω = huber_weights(R, δ)
+3) perform weighted multiplicative updates (update_huber)
+4) track huber_loss(R, δ) in `history`
+5) stop when relative change in objective is below `tol`
+
+### Arguments
+- `X`: non-negative data matrix of size `(m, n)`
+- `rank`: factorization rank`
+- `maxiter`: maximum number of iterations
+- `tol`: relative tolerance for stopping based on objective change
+- `delta`: Huber threshold δ (must be > 0)
+- `seed`: optional random seed for reproducibility
+
+### Returns
+- `W`: non-negative basis matrix of size `(m, rank)`
+- `H`: non-negative coefficient matrix of size `(rank, n)`
+- `history`: vector of Huber objective values per iteration 
+"""
+function robustnmf_huber(
+    X::AbstractMatrix{<:Real};
+    rank::Int = 10,
+    maxiter::Int = 500,
+    tol::Float64 = 1e-4,
+    delta::Float64 = 1.0,
+    seed::Union{Int,Nothing} = nothing)
+
+    # --- Input validation (robust NMF requires non-negative data) ---
+    if any(x -> x < 0, X)
+        throw(ArgumentError("X must be non-negative for NMF (found negative entries)."))
+    end
+    if rank <= 0
+        throw(ArgumentError("rank must be positive (got rank=$rank)."))
+    end
+    if maxiter <= 0
+        throw(ArgumentError("maxiter must be positive (got maxiter=$maxiter)."))
+    end
+    if tol <= 0
+        throw(ArgumentError("tol must be positive (got tol=$tol)."))
+    end
+    if delta <= 0
+        throw(ArgumentError("delta must be > 0 for Huber loss (got delta=$delta)."))
+    end
+
+    # --- Reproducible initialization using a local RNG ---
+    rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
+
+    m, n = size(X)
+
+    # Initialize W and H with random non-negative values
+    W = rand(rng, m, rank)
+    H = rand(rng, rank, n)
+
+    # Small constant to avoid division by zero in multiplicative updates
+    ϵ = eps(Float64)
+
+    # Track objective history (Huber loss values)
+    history = Float64[]
+    prev_obj = Inf
+
+    # --- Main optimization loop ---
+    for iter in 1:maxiter
+        # Compute residual with current factors
+        R = X - W * H
+
+        # Compute current objective (Huber loss)
+        obj = huber_loss(R, delta)
+        push!(history, obj)
+
+        # Stopping criterion: relative change in objective
+        # Note: first iteration won't stop because prev_obj = Inf
+        if abs(prev_obj - obj) / (prev_obj + ϵ) < tol
+            break
+        end
+        prev_obj = obj
+
+        # Compute IRLS weights from current residual
+        Ω = huber_weights(R, delta; ϵ=ϵ)
+
+        # Perform one weighted multiplicative update step
+        W, H = update_huber(X, W, H, Ω; ϵ=ϵ)
+
+        # Finite check to catch numerical issues early
+        if !(all(isfinite, W) && all(isfinite, H))
+            throw(ErrorException("Numerical instability encountered: W/H contain NaN or Inf."))
+        end
+    end
+
+    return W, H, history
+end
+
+"""
+    huber_loss(R, delta; ϵ=eps(Float64))
+
+Compute the **Huber loss** for a residual matrix `R`.
+
+Huber loss is robust to outliers:
+- For small residuals it behaves like squared error (L2).
+- For large residuals it behaves like absolute error (L1), reducing the impact of outliers.
+
+Element-wise definition for residual r:
+- if |r| ≤ δ: 0.5 * r^2
+- else:       δ * (|r| - 0.5*δ)
+
+Returns the **sum** over all entries of R.
+"""
+function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Float64
+    # Basic parameter validation:
+    # delta controls where we transition from quadratic (L2) to linear (L1-like).
+    if delta <= 0
+        throw(ArgumentError("delta must be > 0 for Huber loss (got delta=$delta)."))
+    end
+
+    # Convert delta once to Float64 to avoid repeated conversions inside loops.
+    δ = Float64(delta)
+
+    # Accumulate total loss in Float64 for numerical stability
+    total = 0.0
+
+    # Loop explicitly for performance and to avoid temporary allocations
+    @inbounds for r in R
+        # Residual magnitude
+        ar = abs(Float64(r))
+
+        if ar <= δ
+            # Quadratic region: 0.5 * r^2
+            total +=0.5 * ar * ar
+        else
+            # Linear region: δ*(|r| - 0.5*δ)
+            total += δ * (ar - 0.5 * δ)
+        end
+    end
+
+    return total
+end
+
+
+"""
+    huber_weights(R, delta; ϵ=eps(Float64))
+
+Compute the **Huber IRLS weights** matrix Ω for a residual matrix `R`.
+
+We use an iteratively reweighted least squares (IRLS) interpretation:
+- Small residuals get weight 1.0 (quadratic region).
+- Large residuals get weight δ / (|r| + ϵ), which downweights outliers.
+
+Element-wise:
+- if |r| ≤ δ: w = 1
+- else:       w = δ / (|r| + ϵ)
+
+Returns Ω with the same size as R.
+"""
+function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Matrix{Float64}
+    # Validate delta: must be positive to define a Huber threshold.
+    if delta <= 0
+        throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
+    end
+
+    δ = Float64(delta)
+
+    # Allocate the weights matrix once and fill it in place
+    Ω = Matrix{Float64}(undef, size(R))
+
+    # Fill weights entry-wise
+    @inbounds for j in axes(R, 2), i in axes(R, 1)
+        # Residual magnitude at entry (i, j)
+        ar = abs(Float64(R[i, j]))
+
+        if ar <= δ
+            # Quadratic region: full weight
+            Ω[i, j] = 1.0
+        else
+            # Linear region: downweight large residuals
+            Ω[i, j] = δ / (ar + ϵ)
+        end
+    end
+
+    return Ω
+end
+
+
+"""
+    update_huber(X, W, H, Ω; ϵ=eps(Float64))
+
+Perform **one weighted multiplicative update step** for robust NMF with Huber IRLS weights.
+
+We interpret Huber as a weighted least-squares problem at each IRLS step:
+
+    min{W,H ≥ 0} ||Ω ⊙ (X - W*H)||_F^2
+
+Given Ω (same size as X), the standard Frobenius multiplicative updates become:
+    H ← H ⊙ (W' * (Ω ⊙ X)) ./ (W' * (Ω ⊙ (W*H)) + ϵ)
+    W ← W ⊙ ((Ω ⊙ X) * H') ./ ((Ω ⊙ (W*H)) * H' + ϵ)
+
+Returns updated (W, H).
+"""
+function update_huber(
+    X::AbstractMatrix{<:Real},
+    W::AbstractMatrix{<:Real},
+    H::AbstractMatrix{<:Real},
+    Ω::AbstractMatrix{<:Real};
+    ϵ::Real = eps(Float64))
+    
+    # Convert epsilon once
+    eps64 = Float64(ϵ)
+
+    # Compute the current reconstruction once
+    WH = W * H
+
+    # Apply weights to X and WH (element-wise)
+    # These are the weighted "data" and weighted "model" for the update rules
+    ΩX = Ω .* X
+    ΩWH = Ω .* WH
+
+    # --- Update H ---
+    # Numerator: W' * (Ω ⊙ X)
+    numH = W' * ΩX
+
+    # Denominator: W' * (Ω ⊙ (W*H)) + ϵ
+    denH = W' * ΩWH .+ eps64
+
+    # Multiplicative update (element-wise)
+    H .= H .* (numH ./ denH)
+
+    # Recompute WH after updating H (keeps the next step consistent)
+    WH = W * H
+    ΩWH = Ω .* WH
+
+    # --- update W ---
+    # Numerator: (Ω ⊙ X) * H'
+    numW = ΩX * H'
+
+    # Denominator: (Ω ⊙ (W*H)) * H' + ϵ
+    denW = ΩWH * H' .+ eps64
+
+    # Multiplicative update (element-wise)
+    W .= W .* (numW ./ denW)
+
+    return W, H
+end
+
+
+"""
+    robustnmf(X; kwargs...)
+
+Default robust NMF entry point.
+
+This calls **Huber-loss robust NMF** implementation by default.
+"""
+robustnmf(X::AbstractMatrix{<:Real}; kwargs...) = robustnmf_huber(X; kwargs...)
