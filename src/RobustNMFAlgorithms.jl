@@ -1,7 +1,7 @@
 using LinearAlgebra
 using Random
 
-# --- Helper functions ---
+# --- Helper Functions ---
 """
     huber_loss(R, delta; ϵ=eps(Float64))
 
@@ -93,7 +93,7 @@ end
 
 
 """
-    l21norm(X)
+    l21_loss(X)
 
 Compute the L2,1-norm of matrix X.
 The L2,1-norm is the sum of the L2-norms of each column.
@@ -107,15 +107,15 @@ The L2,1-norm is the sum of the L2-norms of each column.
 # Examples
 ```julia
 X = [1.0 2.0; 3.0 4.0]
-l21norm(X)  # Returns norm([1,3]) + norm([2,4])
+l21_loss(X)  # Returns norm([1,3]) + norm([2,4])
 ```
 """
-function l21norm(X::AbstractMatrix)
+function l21_loss(X::AbstractMatrix)
     return sum(norm(X[:, i]) for i in 1:size(X, 2))
 end
 
 
-# --- Update rules ---
+# --- Update Rules ---
 """
     update_huber(X, W, H, Ω; ϵ=eps(Float64))
 
@@ -247,7 +247,7 @@ function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
     return F_new, G_new
 end
 
-
+# --- Full Algorithms ---
 """
     robustnmf_huber(X; rank=10, maxiter=500, tol=1e-4, delta=1.0, seed=nothing)
 
@@ -392,7 +392,7 @@ function robustnmf_l21(X::AbstractMatrix{<:Real};
         F, G = update_l21(X, F, G)
         
         # Compute L2,1-norm error
-        error = l21norm(X - F * G)
+        error = l21_loss(X - F * G)
         history[iter] = error
         
         # Check convergence
@@ -405,6 +405,7 @@ function robustnmf_l21(X::AbstractMatrix{<:Real};
 end
 
 
+# --- Public API ---
 """
     robustnmf(X; kwargs...)
 

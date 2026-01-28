@@ -126,9 +126,9 @@ end
     X_recon = F * G
     @test size(X_recon) == size(X_outliers)
 
-    # L21norm basic sanity test
+    # L21_loss basic sanity test
     test_matrix = rand(10, 5)
-    l21_val = l21norm(test_matrix)
+    l21_val = l21_loss(test_matrix)
     @test isfinite(l21_val) && l21_val >= 0
 
     # L2,1-NMF should work on clean data too
