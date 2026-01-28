@@ -61,17 +61,17 @@ normalize_nonnegative!,
 load_image_folder,
 nmf,
 robustnmf,
-l21norm, 
+l21_loss, 
 robustnmf_l21,
 huber_loss,
 huber_weights,
 update_huber,
 robustnmf_huber,
-update,
+update_l21,
 plot_basis_vectors, plot_activation_coefficients, 
 plot_reconstruction_comparison, plot_convergence,
 plot_nmf_summary, plot_image_reconstruction
 
-#QUESTION l21norm not used? just in example in RobustNMFAlgorithms
+#QUESTION l21_loss not used? just in example in RobustNMFAlgorithms
 end # module RobustNMF
 
