@@ -3,7 +3,7 @@ using Random
 
 # --- Helper Functions ---
 """
-    huber_loss(R, delta; ϵ=eps(Float64))
+    huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ=eps(Float64))
 
 Compute the **Huber loss** for a residual matrix `R`.
 
@@ -11,11 +11,32 @@ Huber loss is robust to outliers:
 - For small residuals it behaves like squared error (L2).
 - For large residuals it behaves like absolute error (L1), reducing the impact of outliers.
 
-Element-wise definition for residual r:
+Element-wise definition for residual `r`:
 - if |r| ≤ δ: 0.5 * r^2
 - else:       δ * (|r| - 0.5*δ)
 
-Returns the **sum** over all entries of R.
+Returns the **sum** over all entries of `R`.
+
+# Arguments
+- `R::AbstractMatrix{<:Real}`: Residual matrix.
+- `delta::Real`: Huber threshold δ (> 0).
+
+# Keyword Arguments
+- `ϵ=eps(Float64)`: Small constant for numerical stability (used in validation/consistency).
+
+# Returns
+- `loss::Float64`: Sum of Huber losses over all entries of `R`.
+
+# Side Effects
+- None.
+
+# Errors
+- `ArgumentError`: If `delta <= 0`.
+
+# Notes
+- For `|r| ≤ δ`, the loss is quadratic; for `|r| > δ`, it is linear.
+- Summation is done in `Float64` for numerical stability.
+
 """
 function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Float64
     # Basic parameter validation:
@@ -49,9 +70,9 @@ end
 
 
 """
-    huber_weights(R, delta; ϵ=eps(Float64))
+    huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ=eps(Float64))
 
-Compute the **Huber IRLS weights** matrix Ω for a residual matrix `R`.
+Compute the **Huber IRLS weights** matrix `Ω` for a residual matrix `R`.
 
 We use an iteratively reweighted least squares (IRLS) interpretation:
 - Small residuals get weight 1.0 (quadratic region).
@@ -61,7 +82,28 @@ Element-wise:
 - if |r| ≤ δ: w = 1
 - else:       w = δ / (|r| + ϵ)
 
-Returns Ω with the same size as R.
+Returns `Ω` with the same size as `R`.
+
+# Arguments
+- `R::AbstractMatrix{<:Real}`: Residual matrix.
+- `delta::Real`: Huber threshold δ (> 0).
+
+# Keyword Arguments
+- `ϵ=eps(Float64)`: Small constant to avoid division by zero.
+
+# Returns
+- `Ω::Matrix{Float64}`: Weight matrix of same size as `R`.
+
+# Side Effects
+- None.
+
+# Errors
+- `ArgumentError`: If `delta <= 0`.
+
+# Notes
+- Weights are `1.0` in the quadratic region and decrease for large residuals.
+- Used to build weighted multiplicative updates in IRLS.
+
 """
 function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Matrix{Float64}
     # Validate delta: must be positive to define a Huber threshold.
@@ -93,21 +135,35 @@ end
 
 
 """
-    l21_loss(X)
+    l21_loss(X::AbstractMatrix)
 
-Compute the L2,1-norm of matrix X.
+Compute the L2,1-norm of matrix `X`.
 The L2,1-norm is the sum of the L2-norms of each column.
 
 # Arguments
-- `X::AbstractMatrix`: Input matrix
+- `X::AbstractMatrix`: Input matrix.
+
+# Keyword Arguments
+- None.
 
 # Returns
-- Scalar value: sum of L2-norms of columns
+- `value::Float64`: Sum of L2-norms of columns.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Legacy helper used by L2,1-NMF.
 
 # Examples
-```julia
-X = [1.0 2.0; 3.0 4.0]
-l21_loss(X)  # Returns norm([1,3]) + norm([2,4])
+```jldoctest
+julia> X = [1.0 2.0; 3.0 4.0];
+
+julia> l21_loss(X) >= 0
+true
 ```
 """
 function l21_loss(X::AbstractMatrix)
@@ -129,7 +185,31 @@ Given Ω (same size as X), the standard Frobenius multiplicative updates become:
     H ← H ⊙ (W' * (Ω ⊙ X)) ./ (W' * (Ω ⊙ (W*H)) + ϵ)
     W ← W ⊙ ((Ω ⊙ X) * H') ./ ((Ω ⊙ (W*H)) * H' + ϵ)
 
-Returns updated (W, H).
+Returns updated `(W, H)`.
+
+# Arguments
+- `X::AbstractMatrix{<:Real}`: Non-negative data matrix `(m, n)`.
+- `W::AbstractMatrix{<:Real}`: Current basis matrix `(m, rank)`.
+- `H::AbstractMatrix{<:Real}`: Current coefficient matrix `(rank, n)`.
+- `Ω::AbstractMatrix{<:Real}`: IRLS weight matrix (same size as `X`).
+
+# Keyword Arguments
+- `ϵ=eps(Float64)`: Small constant for numerical stability.
+
+# Returns
+- `W::AbstractMatrix{<:Real}`: Updated basis matrix.
+- `H::AbstractMatrix{<:Real}`: Updated coefficient matrix.
+
+# Side Effects
+- Updates `W` and `H` in-place.
+
+# Errors
+- None.
+
+# Notes
+- Multiplicative updates preserve non-negativity if `W` and `H` start non-negative.
+- Uses `Ω ⊙ X` and `Ω ⊙ (W*H)` to compute weighted updates.
+
 """
 function update_huber(
     X::AbstractMatrix{<:Real},
@@ -186,16 +266,27 @@ The L2,1-norm promotes row sparsity in the residual matrix, making the
 algorithm robust to sample-wise (column-wise) outliers.
 
 # Arguments
-- `X::AbstractMatrix`: Data matrix (m × n)
-- `F::AbstractMatrix`: Current basis matrix (m × rank)
-- `G::AbstractMatrix`: Current coefficient matrix (rank × n)
+- `X::AbstractMatrix`: Data matrix `(m, n)`.
+- `F::AbstractMatrix`: Current basis matrix `(m, rank)`.
+- `G::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
 
 # Keyword Arguments
-- `eps_update::Float64=1e-10`: Small constant for numerical stability
+- `eps_update::Float64=1e-10`: Small constant for numerical stability.
 
 # Returns
-- `F_new::Matrix{Float64}`: Updated basis matrix
-- `G_new::Matrix{Float64}`: Updated coefficient matrix
+- `F_new::Matrix{Float64}`: Updated basis matrix.
+- `G_new::Matrix{Float64}`: Updated coefficient matrix.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Legacy algorithm kept for compatibility; Huber is the default robust method.
+- Update uses a diagonal reweighting matrix `D` derived from column residuals.
+
 """
 function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix; 
                     eps_update::Float64=1e-10)
@@ -265,18 +356,43 @@ We optimize it using an IRLS-style weighted least squares approach:
 4) track huber_loss(R, δ) in `history`
 5) stop when relative change in objective is below `tol`
 
-### Arguments
-- `X`: non-negative data matrix of size `(m, n)`
-- `rank`: factorization rank`
-- `maxiter`: maximum number of iterations
-- `tol`: relative tolerance for stopping based on objective change
-- `delta`: Huber threshold δ (must be > 0)
-- `seed`: optional random seed for reproducibility
+# Arguments
+- `X::AbstractMatrix{<:Real}`: Non-negative data matrix of size `(m, n)`.
 
-### Returns
-- `W`: non-negative basis matrix of size `(m, rank)`
-- `H`: non-negative coefficient matrix of size `(rank, n)`
-- `history`: vector of Huber objective values per iteration 
+# Keyword Arguments
+- `rank::Int=10`: Factorization rank.
+- `maxiter::Int=500`: Maximum number of iterations.
+- `tol::Float64=1e-4`: Relative tolerance for stopping based on objective change.
+- `delta::Float64=1.0`: Huber threshold δ (must be > 0).
+- `seed=nothing`: Optional random seed for reproducibility.
+
+# Returns
+- `W::Matrix{Float64}`: Non-negative basis matrix of size `(m, rank)`.
+- `H::Matrix{Float64}`: Non-negative coefficient matrix of size `(rank, n)`.
+- `history::Vector{Float64}`: Huber objective values per iteration.
+
+# Side Effects
+- None. (The function does not modify `X`.)
+
+# Errors
+- `ArgumentError`: If `X` contains negative entries or parameters are invalid.
+
+# Notes
+- Uses IRLS weights via `huber_weights` and weighted multiplicative updates.
+- Convergence check is based on relative change of Huber objective.
+- Initialization uses a local RNG seeded by `seed` when provided.
+
+# Examples
+```jldoctest
+julia> using RobustNMF
+
+julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=123);
+
+julia> W, H, history = robustnmf_huber(X; rank=5, maxiter=100, tol=1e-6, delta=1.0, seed=123);
+
+julia> size(W), size(H), length(history) > 0
+((30, 5), (5, 20), true)
+```
 """
 function robustnmf_huber(
     X::AbstractMatrix{<:Real};
@@ -359,8 +475,44 @@ L2,1-Norm Regularized Non-negative Matrix Factorization.
 Minimizes: ||X - FG||_{2,1} where the L2,1-norm promotes robustness
 to sample-wise outliers (entire corrupted columns in `X`).
 
-NOTE: The course PDF for this project specifies robust NMF via **L1**, **Huber**, or **Itakura-Saito**, 
+NOTE: The course PDF for this project specifies robust NMF via **L1**, **Huber**, or **Itakura-Saito**,
 we keep this implementation temporarily to avoid breaking existing code during the migration.
+
+# Arguments
+- `X::AbstractMatrix{<:Real}`: Non-negative data matrix `(m, n)`.
+
+# Keyword Arguments
+- `rank::Int=10`: Factorization rank.
+- `maxiter::Int=500`: Maximum number of iterations.
+- `tol::Float64=1e-4`: Absolute tolerance for stopping.
+- `seed=nothing`: Optional random seed for reproducibility.
+
+# Returns
+- `F::Matrix{Float64}`: Non-negative basis matrix `(m, rank)`.
+- `G::Matrix{Float64}`: Non-negative coefficient matrix `(rank, n)`.
+- `history::Vector{Float64}`: L2,1 objective values per iteration.
+
+# Side Effects
+- None. (The function does not modify `X`.)
+
+# Errors
+- `AssertionError`: If `X` contains negative entries or parameters are invalid.
+
+# Notes
+- Legacy algorithm kept for compatibility; Huber is the default robust method.
+- Convergence check uses absolute objective value (`error < tol`).
+
+# Examples
+```jldoctest
+julia> using RobustNMF
+
+julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=7);
+
+julia> F, G, history = robustnmf_l21(X; rank=4, maxiter=50, tol=1e-3, seed=7);
+
+julia> size(F), size(G), length(history) > 0
+((20, 4), (4, 12), true)
+```
 """
 function robustnmf_l21(X::AbstractMatrix{<:Real}; 
                  rank::Int=10, 
@@ -412,5 +564,35 @@ end
 Default robust NMF entry point.
 
 This calls **Huber-loss robust NMF** implementation by default.
+
+# Arguments
+- `X::AbstractMatrix{<:Real}`: Non-negative data matrix `(m, n)`.
+
+# Keyword Arguments
+- `kwargs...`: Forwarded to `robustnmf_huber`.
+
+# Returns
+- `(W, H, history)`: See `robustnmf_huber`.
+
+# Side Effects
+- None.
+
+# Errors
+- `ArgumentError`: If inputs are invalid (see `robustnmf_huber`).
+
+# Notes
+- Public API entry point; keeps the external name stable if the default robust method changes.
+
+# Examples
+```jldoctest
+julia> using RobustNMF
+
+julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=7);
+
+julia> W, H, history = robustnmf(X; rank=4, maxiter=50, tol=1e-6, delta=1.0, seed=7);
+
+julia> size(W), size(H)
+((20, 4), (4, 12))
+```
 """
 robustnmf(X::AbstractMatrix{<:Real}; kwargs...) = robustnmf_huber(X; kwargs...)
