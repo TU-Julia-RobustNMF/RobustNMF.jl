@@ -19,21 +19,28 @@ nmf
 - **W** - Basis Matrix (m × rank)
 - **H** - Coefficient Matrix (rank × n)
 
-### 2. Robust NMF - L2,1-norm
-RobustNMF with L2,1-norm approach is best for sample-wise outliers and data with corrupted samples (entire columns).
+### 2. Robust NMF (Huber, default)
+Robust NMF using the Huber loss and IRLS-weighted multiplicative updates.
 
 ```@docs
 robustnmf
-update
+robustnmf_huber
 ```
 
-**Returns:**
-- **F** - Basis Matrix (m × rank)
-- **G** - Coefficient Matrix (rank × n)
+### 3. Robust NMF (Legacy L2,1)
+Legacy L2,1-robust NMF (kept temporarily for compatibility).
 
-**Helper functions:**
 ```@docs
-l21norm
+robustnmf_l21
+```
+
+### Helper functions (internal)
+```@docs
+update_huber
+huber_loss
+huber_weights
+update_l21
+l21_loss
 ```
 
 ## Data Generation and Preprocessing
