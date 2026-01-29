@@ -403,15 +403,15 @@ This function is **algorithm-agnostic** and works for:
 - For image data, set `img_shape` to visualize basis vectors and reconstructions.
 
 # Examples
+This example runs the summary once for standard NMF and once for robust NMF (Huber).
 ```jldoctest
 julia> using RobustNMF, Plots
-# --- Standard NMF ---
+
 julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 
 julia> W, H, history = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=5);
 
 julia> p = plot_nmf_summary(X, W, H, history; objective=:frobenius, max_basis=4, max_samples=2);
-# --- Robust NMF (Huber loss) ---
 
 julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 
