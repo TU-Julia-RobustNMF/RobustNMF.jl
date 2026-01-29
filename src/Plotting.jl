@@ -354,7 +354,7 @@ function plot_nmf_summary(
     max_basis::Int=9,
     max_samples::Int=4,
     objective::Symbol=:auto,
-    convergence_ylabel::Union{Nothing,String}=nothing
+    convergence_ylabel::Union{Nothing,String}=nothing,
     title::String="NMF Summary"
 )
     
@@ -431,7 +431,7 @@ function plot_nmf_summary(
     #   middle: reconstruction (top), convergence (bottom)
     #   right:  info panel
 
-    l = @layout [[a; b] [c; d] e{0.25}]
+    l = @layout [[a; b] [c; d] e]
 
     return plot(
         p1, p2, p3, p4, p_info;
