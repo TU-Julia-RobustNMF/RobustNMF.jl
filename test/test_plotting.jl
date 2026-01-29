@@ -23,6 +23,22 @@ using Statistics
         p_linear = plot_convergence(history; log_scale=false)
         @test p_linear isa Plots.Plot
     end
+
+    @testset "plot_convergence branches" begin
+        # objective label branches
+        @test plot_convergence(history; objective=:frobenius) isa Plots.Plot
+        @test plot_convergence(history; objective=:huber) isa Plots.Plot
+        @test plot_convergence(history; objective=:l21) isa Plots.Plot
+        @test plot_convergence(history; objective=:auto) isa Plots.Plot
+
+        # ylabel ovverride branches
+        p_y = plot_convergence(history; objective=:frobenius, ylabel="Custom Y")
+        @test p_y isa Plots.Plot
+
+        # log_scale=true branch (default is true, but being explicit)
+        p_log = plot_convergence(history; log_scale=true)
+        @test p_log isa Plots.Plot
+    end
     
     @testset "plot_basis_vectors" begin
         # Test without image shape (1D visualization)
@@ -37,6 +53,15 @@ using Statistics
         p_img = plot_basis_vectors(W_img; img_shape=(10, 10), max_components=5)
         @test p_img isa Plots.Plot
     end
+
+    @testset "plot_basis_vectors error path" begin
+        # img_shape mismatch should error
+        @test_throws ErrorException plot_basis_vectors(W; img_shape=(3, 3), max_components=1)
+
+        # explicit layout branch
+        p_layout = plot_basis_vectors(W; max_components=4, layout=(2, 2))
+        @test p_layout isa Plots.Plot
+    end
     
     @testset "plot_activation_coefficients" begin
         p = plot_activation_coefficients(H; max_samples=5)
@@ -46,6 +71,13 @@ using Statistics
         H_small = rand(5, 10)
         p_heatmap = plot_activation_coefficients(H_small)
         @test p_heatmap isa Plots.Plot
+    end
+
+    @testset "plot_activation_coefficients large-matrix branch" begin
+        # Force the "bar plots" branch (n > 100 or rank > 50)
+        H_large = rand(10, 200)  # n=200 triggers the "profiles" branch
+        p_profiles = plot_activation_coefficients(H_large; max_samples=3)
+        @test p_profiles isa Plots.Plot
     end
     
     @testset "plot_reconstruction_comparison" begin
@@ -63,6 +95,16 @@ using Statistics
                                                img_shape=(8, 8), n_samples=3)
         @test p_img isa Plots.Plot
     end
+
+    @testset "plot_reconstruction_comparison error paths" begin
+        # dimension mismatch assertion
+        @test_throws AssertionError plot_reconstruction_comparison(X, X_recon[:, 1:end-1])
+
+        # img_shape reshape mismatch: reshape will throw (DimensionMismatch or similar)
+        X_bad = vcat(X, zeros(1, size(X, 2)))  # (size(X,1)+1) × n
+        X_bad_recon = X_bad                    # same dims so it reaches reshape
+        @test_throws Exception plot_reconstruction_comparison(X_bad, X_bad_recon; img_shape=(8, 8), n_samples=1)
+    end
     
     @testset "plot_nmf_summary" begin
         p = plot_nmf_summary(X, W, H, history; max_basis=4, max_samples=2)
@@ -76,6 +118,21 @@ using Statistics
         p_img = plot_nmf_summary(X_img, W_img, H_img, hist_img; 
                                 img_shape=(8, 8), max_basis=6, max_samples=3)
         @test p_img isa Plots.Plot
+    end
+
+    @testset "plot_nmf_summary branches" begin
+        # exercise objective label branches + ylabel override + title kw
+        p_f = plot_nmf_summary(X, W, H, history; objective=:frobenius, convergence_ylabel="obj", title="Summary F")
+        @test p_f isa Plots.Plot
+
+        p_h = plot_nmf_summary(X, W, H, history; objective=:huber, title="Summary H")
+        @test p_h isa Plots.Plot
+
+        p_l = plot_nmf_summary(X, W, H, history; objective=:l21, title="Summary L")
+        @test p_l isa Plots.Plot
+
+        p_a = plot_nmf_summary(X, W, H, history; objective=:auto, title="Summary A")
+        @test p_a isa Plots.Plot
     end
     
     @testset "plot_image_reconstruction" begin
@@ -91,6 +148,17 @@ using Statistics
         p_idx = plot_image_reconstruction(X_img, W_img, H_img, (10, 10); 
                                          indices=[1, 2, 3], n_images=3)
         @test p_idx isa Plots.Plot
+    end
+
+    @testset "plot_image_reconstruction index selection branches" begin
+        # Test explicit indices truncation
+        m_img = 100
+        X_img, _, _ = generate_synthetic_data(m_img, 8; rank=5, seed=111)
+        W_img, H_img, _ = nmf(X_img; rank=5, maxiter=30)
+
+        # Provide more indices than n_images -> should truncate safely
+        p_trunc = plot_image_reconstruction(X_img, W_img, H_img, (10, 10); indices=[1, 2, 3, 4, 5, 6], n_images=3)
+        @test p_trunc isa Plots.Plot
     end
     
 end
