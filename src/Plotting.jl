@@ -1,6 +1,5 @@
 using Plots
 using LinearAlgebra
-using Statistics
 
 """
     plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16, 
@@ -201,17 +200,30 @@ end
 
 
 """
-    plot_convergence(history::Vector; title::String="NMF Convergence",
-                    ylabel::String="Frobenius Error", log_scale::Bool=true)
+    plot_convergence(history::Vector;
+                     title::String="NMF Convergence",
+                     objective::Symbol=:auto,
+                     ylabel::Union{Nothing,String}=nothing, 
+                     log_scale::Bool=true)
 
-Plot the convergence history of the NMF algorithm.
+Plot the convergence history (`history`) produced by an NMF routine.
+
+This function is intentionally objective-agnostic: depending on the algorithm,
+`history` may contain Frobenius reconstruction error (standard NMF), Huber loss
+(robust NMF), or another objective value.
 
 # Arguments
-- `history::Vector`: Vector of error values at each iteration.
+- `history::Vector`: Objective values recorded per iteration.
 
 # Keyword Arguments
 - `title::String`: Plot title.
-- `ylabel::String`: Y-axis label.
+- `objective::Symbol=:auto`: Hint for labeling the objective.
+    - `:frobenius` → "Frobenius Error"
+    - `:huber`     → "Huber Loss"
+    - `:l21`       → "L2,1 Loss"
+    - `:auto`      → "Objective" (neutral default)
+- `ylabel::Union{Nothing,String}=nothing`: Explicit y-axis label.
+If provided, this ovverrides `objective`.
 - `log_scale::Bool=true`: Use logarithmic scale for y-axis.
 
 # Returns
@@ -220,15 +232,41 @@ Plot the convergence history of the NMF algorithm.
 # Examples
 ```julia
 W, H, history = nmf(X; rank=10, maxiter=500)
-plot_convergence(history)
+plot_convergence(history; objective=:frobenius)
+
+W, H, history = robustnmf(X; rank=10, maxiter=500)
+plot_convergence(history; objective=:huber)
 ```
 """
-function plot_convergence(history::Vector; title::String="NMF Convergence",
-                         ylabel::String="Frobenius Error", log_scale::Bool=true)
+function plot_convergence(
+    history::Vector; 
+    title::String="NMF Convergence",
+    objective::Symbol=:auto,
+    ylabel::Union{Nothing,String}=nothing,
+    log_scale::Bool=true)
+
+    default_ylabel = if objective === :frobenius
+        "Frobenius Error"
+    elseif objective === :huber
+        "Huber Loss"
+    elseif objective === :l21
+        "L2,1 Loss"
+    else
+        "Objective"
+    end
+
+    ylab = ylabel === nothing ? default_ylabel : ylabel
     
-    p = plot(1:length(history), history, 
-            xlabel="Iteration", ylabel=ylabel,
-            title=title, lw=2, color=:blue, legend=false)
+    p = plot(
+        1:length(history), 
+        history, 
+        xlabel="Iteration",
+        ylabel=ylab,
+        title=title, 
+        lw=2, 
+        color=:blue,
+        legend=false
+    )
     
     if log_scale
         plot!(p, yscale=:log10)
@@ -239,53 +277,136 @@ end
 
 
 """
-    plot_nmf_summary(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix, 
-                    history::Vector; img_shape=nothing, max_basis::Int=9,
-                    max_samples::Int=4)
+    plot_nmf_summary(X::AbstractMatrix, 
+                     W::AbstractMatrix, 
+                     H::AbstractMatrix, 
+                     history::Vector; 
+                     img_shape=nothing, 
+                     title::String="NMF Summary",
+                     max_basis::Int=10,
+                     max_samples::Int=10,
+                     objective::Symbol=:auto,
+                     convergence_ylabel::Union{Nothing,String}=nothing)
 
-Create a comprehensive summary plot showing basis vectors, sample reconstructions,
-and convergence in a single figure.
+Create a summary visualization for an NMF result.
+
+The summary consists of:
+1. Basis vectors / components (columns of `W`)
+2. Activating coefficients (rows of `H`)
+3. Reconstruction comparison (original vs reconstructed data)
+4. Convergence curve (objective value over iterations)
+
+This function is **algorithm-agnostic** and works for:
+- Standard NMF (Frobenius objective)
+- Robist NMF with Huber loss
+- Legacy L2,1 NMF
 
 # Arguments
-- `X::AbstractMatrix`: Original data matrix.
-- `W::AbstractMatrix`: Basis matrix.
-- `H::AbstractMatrix`: Coefficient matrix.
-- `history::Vector`: Convergence history.
+- `X::AbstractMatrix`: Original non-negative data matrix `(m × n)`.
+- `W::AbstractMatrix`: Basis matrix `(m × r)`.
+- `H::AbstractMatrix`: Coefficient matrix `(r × n)`.
+- `history::Vector`: Objective values recorded during optimization.
 
 # Keyword Arguments
-- `img_shape`: Tuple `(height, width)` for image data.
-- `max_basis::Int=9`: Maximum number of basis vectors to show.
-- `max_samples::Int=4`: Maximum number of reconstruction comparisons.
+- `img_shape`: Optional tuple `(height, width)` if columns of `X` or `W` represent vectorized images.
+- `title`: Overalltitle for the summary figure.
+- `max_basis::Int=10`: Maximum number of basis vectors (columns of `W`) to visualize.
+- `max_samples::Int=10`: Maximum number of samples / activations to visualize.
+- `objective`: Type of objective used to generate `history`.
+    - `:frobenius` → squared Frobenius reconstruction objective
+    - `:huber`     → Huber loss (robust NMF)
+    - `:l21`       → L2,1 Loss
+    - `:auto`      → neutral label ("Objective")
+- `convergence_ylabel`: Optional explicit y-axis label for the convergence plot.
+  If provided, this overrides the label implied by `objective`.
 
 # Returns
 - A `Plots.Plot` object with a comprehensive summary.
 
 # Examples
 ```julia
-W, H, history = nmf(X; rank=10)
-plot_nmf_summary(X, W, H, history; img_shape=(28, 28))
+# --- Standard NMF ---
+W, H, history = nmf(X; rank=10, maxiter=500)
+plot_nmf_summary(
+    X, W, H, history;
+    objective=:frobenius
+    img_shape=(28, 28)
+)
+
+# --- Robust NMF (Huber loss) ---
+W, H, history = robustnmf(X; rank=10, maxiter=500, delta=1.0)
+plot_nmf_summary(
+    X, W, H, history;
+    objective=:huber
+    img_shape=(28, 28)
+)
+
+# --- Neutral / algorithm-agnostic usage ---
+plot_nmf_summary(X, W, H, history)
 ```
 """
-function plot_nmf_summary(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix,
-                         history::Vector; img_shape=nothing, max_basis::Int=9,
-                         max_samples::Int=4)
+function plot_nmf_summary(
+    X::AbstractMatrix, 
+    W::AbstractMatrix, 
+    H::AbstractMatrix,
+    history::Vector; 
+    img_shape=nothing,
+    max_basis::Int=9,
+    max_samples::Int=4,
+    objective::Symbol=:auto,
+    convergence_ylabel::Union{Nothing,String}=nothing
+)
     
-    # Create individual plots
-    p1 = plot_basis_vectors(W; img_shape=img_shape, max_components=max_basis,
-                           title="Basis Vectors")
+    # --- Basis vectors (columns of W) ---
+    p1 = plot_basis_vectors(
+        W; 
+        img_shape=img_shape, 
+        max_components=max_basis, 
+        title="Basis Vectors (W)")
     
+    # --- Activating coefficients (rows of H) ---
+    p2 = plot_activation_coefficients(
+        H;
+        max_samples=max_samples,
+        title="Activating Coefficients (H)"
+    )
+
+    # --- Reconstruction comparison (original vs reconstructed data) ---
     X_recon = W * H
-    p2 = plot_reconstruction_comparison(X, X_recon; img_shape=img_shape, 
-                                       n_samples=max_samples,
-                                       title="Reconstructions")
+    p3 = plot_reconstruction_comparison(
+        X, X_recon;
+        img_shape=img_shape,
+        n_samples=max_samples,
+        title="Reconstruction"
+    )
     
-    p3 = plot_convergence(history; title="Convergence")
+    # --- Convergence history (objective over iterations) ---
+    p4 = plot_convergence(
+        history;
+        title="Convergence",
+        objective=objective,
+        ylabel=convergence_ylabel
+    )
+
     
-    # Calculate error metrics
-    err = norm(X - X_recon)
-    rel_err = err / norm(X)
+    # --- Reconstruction metrics for the info panel ---
+    fro_err = norm(X - X_recon)                       # ‖X - WH‖_F
+    rel_fro_err = fro_err / (norm(X) + eps(Float64))  # relative Frobenius error
     
-    # Create info text plot
+    # Determine objective label for history (may be Frobinius², Huber, or L2,1)
+    obj_label = if objective === :frobenius
+        "Objective (‖X - WH‖²_F)"
+    elseif objective === :huber
+        "Objective (Huber loss)"
+    elseif objective === :l21
+        "Objective (L2,1 loss)"
+    else
+        "Objective"
+    end
+
+    final_obj = history[end]
+
+    # --- Info panel text ---
     info_text = """
     NMF Summary
     ───────────────
@@ -293,21 +414,31 @@ function plot_nmf_summary(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatri
     Rank: $(size(W, 2))
     Iterations: $(length(history))
     
-    Final Error: $(round(err, digits=4))
-    Relative Error: $(round(rel_err*100, digits=2))%
+    Frobenius Error ‖X-WH‖_F: $(round(err, digits=6))
+    Relative Frobenius Error: $(round(rel_err*100, digits=2))%
+    
+    $obj_label: $(round(final_obj, digits=6))
     """
+
+    p_info = plot(framestyle=:none, showaxis=false, ticks=false)
+    annotate!(p_info, 0.02, 0.98, text(info_text, :left, 10, :courier))
     
-    p4 = plot(framestyle=:none, showaxis=false, ticks=false)
-    annotate!(p4, 0.1, 0.5, text(info_text, :left, 10, :courier))
-    
-    # Combine into layout
+    # --- Combine plots including the info panel ---
+    # Layout with five panels:
+    #   left: basis vectors
+    #   middle: reconstruction (top), convergence (bottom)
+    #   right: info panel
+
     l = @layout [
-        a{0.4h}
-        [b{0.6w} [c; d]]
+        a{0.6w} [b; c] d{0.25w}
     ]
-    
-    plot(p1, p2, p3, p4, layout=l, size=(1200, 900),
-         plot_title="NMF Analysis Summary")
+
+    return plot(
+        p1, p2, p3, p4, p_info;
+        layout=l,
+        size=(1500, 850),
+        title=title
+    )
 end
 
 
