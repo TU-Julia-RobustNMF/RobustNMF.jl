@@ -137,7 +137,9 @@ mae = mean(abs.(X - W*H))
 rel_error = norm(X - W*H) / norm(X)
 ```
 
-## Running the Demo
+# Running the Demo
+
+Demo is required to demonstrate the visual and quantitative comparison between the NMF models.
 
 To run the demo version of RobustNMF:
 
@@ -147,6 +149,7 @@ using Pkg
 Pkg.instantiate()
 
 # Run the following command to have the demo version of RobustNMF
+pwd()
 include("examples/demo_robustnmf.jl")
 ```
 
