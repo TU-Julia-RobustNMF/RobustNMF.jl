@@ -2,26 +2,21 @@
 
 ## Installation
 
-Clone the repository and activate the project environment.
-The following steps work when executed from the repository root directory.
+Install via the Julia package manager using the Git URL (since the package is not registered):
 
 ```julia
-# Enter the Julia package manager
 ]
-
-# Activate the local project environment
-activate .
-
-# Install all required dependencies
-instantiate
+add https://github.com/TU-Julia-RobustNMF/RobustNMF.jl.git
 ```
+
+Julia version: `1.11` (see `Project.toml`).
 
 ## Basic Usage
 
 Import the package:
 
 ```julia
-using RobustNMF
+using RobustNMF, Plots
 ```
 
 ## Simple Example
@@ -31,25 +26,37 @@ Perform robust non-negative matrix factorization:
 ```julia
 
 # Generate synthetic non-negative data
-X, W, H = generate_synthetic_data(20, 30)
+X, W_true, H_true = generate_synthetic_data(50, 40; rank=6, seed=1)
 
 # Add Gaussian noise (in-place)
-add_gaussian_noise!(X, σ = 0.2)
+add_gaussian_noise!(X; σ=0.2)
 
 # Add sparse outliers (in-place)
-add_sparse_outliers!(X, fraction = 0.04, magnitude = 5.2)
+add_sparse_outliers!(X; fraction=0.05, magnitude=5.0, seed=1)
 
 # Normalize and rescale data to non-negative range
 normalize_nonnegative!(X)
 
 # Run standard NMF
-W_nmf, H_nmf, history = nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
+W_nmf, H_nmf, history = nmf(X; rank=6, maxiter=500, tol=1e-4)
 
 # Reconstruct the data matrix (X)
 X_rec = W_nmf * H_nmf
 
 # Run robust NMF
-W_robust, H_robust, history_robust = robust_nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
+W_robust, H_robust, history_robust = robustnmf(X; rank=6, maxiter=500, tol=1e-3, seed=1)
+
+# Compare relative reconstruction error
+relerr_nmf = norm(X - W_nmf * H_nmf) / norm(X)
+relerr_robust = norm(X - W_robust * H_robust) / norm(X)
+println("relative error NMF:    ", relerr_nmf)
+println("relative error robust: ", relerr_robust)
+
+# Plot convergence of both runs
+p_nmf = plot_convergence(history; objective=:frobenius, title="NMF Convergence")
+p_rob = plot_convergence(history_robust; objective=:huber, title="Robust NMF Convergence")
+display(p_nmf)
+display(p_rob)
 
 ```
 
