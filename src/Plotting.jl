@@ -299,9 +299,9 @@ julia> _, _, history = nmf(X; rank=4, maxiter=500, tol=1e-5, seed=4);
 
 julia> p = plot_convergence(history; objective=:frobenius);
 
-julia> _, _, history = robustnmf(X; rank=10, maxiter=500)
+julia> _, _, history = robustnmf(X; rank=10, maxiter=500);
 
-julia> plot_convergence(history; objective=:huber)
+julia> plot_convergence(history; objective=:huber);
 
 julia> p isa Plots.Plot
 true
@@ -418,6 +418,9 @@ julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 julia> W, H, history = robustnmf(X; rank=5, maxiter=40, tol=1e-5, seed=5);
 
 julia> p = plot_nmf_summary(X, W, H, history; objective=:huber, max_basis=4, max_samples=2);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_nmf_summary(
@@ -555,7 +558,7 @@ julia> X, _, _ = generate_synthetic_data(100, 8; rank=5, seed=6);
 
 julia> W, H, _ = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=6);
 
-julia> p = plot_image_reconstruction(X, W, H, (64, 64); n_images=6);
+julia> p = plot_image_reconstruction(X, W, H, (10, 10); n_images=3);
 
 julia> p isa Plots.Plot
 true
