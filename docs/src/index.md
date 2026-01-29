@@ -9,14 +9,14 @@ Install via the Julia package manager using the Git URL (since the package is no
 add https://github.com/TU-Julia-RobustNMF/RobustNMF.jl.git
 ```
 
-Julia version: `1.11` (see `Project.toml`).
+Julia version: `1.11`.
 
 ## Basic Usage
 
 Import the package:
 
 ```julia
-using RobustNMF, Plots
+using RobustNMF
 ```
 
 ## Simple Example
