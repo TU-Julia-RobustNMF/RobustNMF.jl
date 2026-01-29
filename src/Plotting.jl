@@ -217,7 +217,7 @@ This function is intentionally objective-agnostic: depending on the algorithm,
 
 # Keyword Arguments
 - `title::String`: Plot title.
-- `Objective::Symbol=:auto`: Hint for labeling the objective.
+- `objective::Symbol=:auto`: Hint for labeling the objective.
     - `:frobenius` → "Frobenius Error"
     - `:huber`     → "Huber Loss"
     - `:l21`       → "L2,1 Loss"
@@ -235,7 +235,7 @@ W, H, history = nmf(X; rank=10, maxiter=500)
 plot_convergence(history; objective=:frobenius)
 
 W, H, history = robustnmf(X; rank=10, maxiter=500)
-plot_convergence(histroy; objective=:huber)
+plot_convergence(history; objective=:huber)
 ```
 """
 function plot_convergence(
