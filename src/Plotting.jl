@@ -30,7 +30,7 @@ plot_basis_vectors(W; img_shape=(28, 28), max_components=16)
 ```
 """
 function plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16,
-                           title::String="Basis Vectors (W)", layout=nothing)
+                            title::String="Basis Vectors (W)", layout=nothing)
     
     m, rank = size(W)
     n_display = min(rank, max_components)
@@ -355,6 +355,7 @@ function plot_nmf_summary(
     max_samples::Int=4,
     objective::Symbol=:auto,
     convergence_ylabel::Union{Nothing,String}=nothing
+    title::String="NMF Summary"
 )
     
     # --- Basis vectors (columns of W) ---
@@ -362,7 +363,8 @@ function plot_nmf_summary(
         W; 
         img_shape=img_shape, 
         max_components=max_basis, 
-        title="Basis Vectors (W)")
+        title="Basis Vectors (W)"
+    )
     
     # --- Activating coefficients (rows of H) ---
     p2 = plot_activation_coefficients(
@@ -393,7 +395,7 @@ function plot_nmf_summary(
     fro_err = norm(X - X_recon)                       # ‖X - WH‖_F
     rel_fro_err = fro_err / (norm(X) + eps(Float64))  # relative Frobenius error
     
-    # Determine objective label for history (may be Frobinius², Huber, or L2,1)
+    # Determine objective label for history (may be Frobenius², Huber, or L2,1)
     obj_label = if objective === :frobenius
         "Objective (‖X - WH‖²_F)"
     elseif objective === :huber
@@ -408,14 +410,14 @@ function plot_nmf_summary(
 
     # --- Info panel text ---
     info_text = """
-    NMF Summary
+    $(title)
     ───────────────
     Data size: $(size(X))
     Rank: $(size(W, 2))
     Iterations: $(length(history))
     
-    Frobenius Error ‖X-WH‖_F: $(round(err, digits=6))
-    Relative Frobenius Error: $(round(rel_err*100, digits=2))%
+    Frobenius Error ‖X-WH‖_F: $(round(fro_err, digits=6))
+    Relative Frobenius Error: $(round(rel_fro_err*100, digits=2))%
     
     $obj_label: $(round(final_obj, digits=6))
     """
@@ -425,13 +427,11 @@ function plot_nmf_summary(
     
     # --- Combine plots including the info panel ---
     # Layout with five panels:
-    #   left: basis vectors
+    #   left:   basis (top), activations (bottom)
     #   middle: reconstruction (top), convergence (bottom)
-    #   right: info panel
+    #   right:  info panel
 
-    l = @layout [
-        a{0.6w} [b; c] d{0.25w}
-    ]
+    l = @layout [[a; b] [c; d] e{0.25}]
 
     return plot(
         p1, p2, p3, p4, p_info;
