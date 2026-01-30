@@ -9,7 +9,7 @@ Practical workflows demonstrating RobustNMF.jl capabilities.
 Create synthetic data and corrupt it with outliers to see how robust NMF handles them.
 
 ```julia
-using RobustNMF
+using RobustNMF, Statistics
 
 # Generate clean synthetic data
 X_clean, W_true, H_true = generate_synthetic_data(100, 60; rank=10, seed=42)
@@ -56,6 +56,8 @@ println("Improvement:      $(round((mae_standard - mae_robust)/mae_standard*100,
 Generate comprehensive visualizations to understand the results.
 
 ```julia
+using Plots
+
 # Full summary for Standard NMF
 plot_nmf_summary(X_outliers, W_std, H_std, hist_std; title="Standard NMF")
 
