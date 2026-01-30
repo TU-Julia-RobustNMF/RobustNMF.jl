@@ -38,7 +38,7 @@ Returns the **sum** over all entries of `R`.
 - Summation is done in `Float64` for numerical stability.
 
 """
-function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Float64
+function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))
     # Basic parameter validation:
     # delta controls where we transition from quadratic (L2) to linear (L1-like).
     if delta <= 0
@@ -105,7 +105,7 @@ Returns `Ω` with the same size as `R`.
 - Used to build weighted multiplicative updates in IRLS.
 
 """
-function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))::Matrix{Float64}
+function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))
     # Validate delta: must be positive to define a Huber threshold.
     if delta <= 0
         throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
@@ -288,8 +288,8 @@ algorithm robust to sample-wise (column-wise) outliers.
 - Update uses a diagonal reweighting matrix `D` derived from column residuals.
 
 """
-function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix; 
-                    eps_update::Float64=1e-10)
+function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
+                    eps_update::Real=1e-10)
     
     m, n = size(X)
     rank = size(F, 2)
@@ -398,8 +398,8 @@ function robustnmf_huber(
     X::AbstractMatrix{<:Real};
     rank::Int = 10,
     maxiter::Int = 500,
-    tol::Float64 = 1e-4,
-    delta::Float64 = 1.0,
+    tol::Real = 1e-4,
+    delta::Real = 1.0,
     seed::Union{Int,Nothing} = nothing)
 
     # --- Input validation (robust NMF requires non-negative data) ---
@@ -511,10 +511,10 @@ julia> size(F), size(G), length(history) > 0
 ((20, 4), (4, 12), true)
 ```
 """
-function robustnmf_l21(X::AbstractMatrix{<:Real}; 
-                 rank::Int=10, 
-                 maxiter::Int=500, 
-                 tol::Float64=1e-4,
+function robustnmf_l21(X::AbstractMatrix{<:Real};
+                 rank::Int=10,
+                 maxiter::Int=500,
+                 tol::Real=1e-4,
                  seed::Union{Int,Nothing}=nothing)
     
     @assert minimum(X) >= 0 "X must be non-negative"

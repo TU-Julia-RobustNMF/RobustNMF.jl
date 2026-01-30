@@ -46,8 +46,8 @@ julia> minimum(X) >= 0
 true
 ```
 """
-function generate_synthetic_data(m::Int, n::Int; rank::Int=10, 
-    noise_level::Float64=0.0, seed=nothing)
+function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
+    noise_level::Real=0.0, seed=nothing)
     
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
@@ -106,7 +106,7 @@ julia> minimum(X) >= 0
 true
 ```
 """
-function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
+function add_gaussian_noise!(X::AbstractMatrix; σ::Real=0.1, clip_at_zero::Bool=true)
     
     # Allocate temporary noise buffer with same size/type as X
     noise = similar(X)
@@ -185,7 +185,7 @@ julia> count(>(0.0), X) > 0
 true
 ```
 """
-function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
+function add_sparse_outliers!(X::AbstractMatrix; fraction::Real=0.01, magnitude::Real=5.0,
     seed=nothing)
 
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)

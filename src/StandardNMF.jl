@@ -43,7 +43,7 @@ julia> size(W), size(H), length(history) > 0
 ((20, 3), (3, 15), true)
 ```
 """
-function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Float64 = 1e-4, seed=nothing)
+function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothing)
 
         rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
