@@ -36,6 +36,8 @@ using RobustNMF
 Perform robust non-negative matrix factorization with noisy data:
 
 ```julia
+using Statistics  # For mean() function
+
 # Generate synthetic non-negative data
 X, W_true, H_true = generate_synthetic_data(50, 40; rank=6, seed=1)
 
