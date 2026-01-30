@@ -156,7 +156,6 @@ using Pkg
 Pkg.instantiate()
 
 # Run the following command to have the demo version of RobustNMF
-pwd()
 include("examples/demo_robustnmf.jl")
 ```
 
