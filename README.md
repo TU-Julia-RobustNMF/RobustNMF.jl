@@ -185,8 +185,8 @@ After this setup, the demos can be executed with:
 include("examples/demo_robustnmf.jl")
 include("examples/demo_att_faces.jl")
 ```
-
 The demos will automatically generate and save plots in `examples/outputs/`
+
 ---
 
 ## Documentation
