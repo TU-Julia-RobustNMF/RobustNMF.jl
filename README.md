@@ -161,25 +161,6 @@ For full API documentation, see [API Reference](https://tu-julia-robustnmf.githu
 - Larger values (2.0) → More precise on clean data, but less outlier-resistant
 - Start with `delta=1.0` and tune based on your data
 
-### Real-data demo: AT&T / ORL face images (grayscale)
-
-Run the exmaple from the repo root:
-```bash
-julia --project=examples -e 'include("examples/demo_att_faces.jl")'
-```
-
-or inside Julia REPL:
-```julia
-import Pkg
-Pkg.activate("examples")
-Pkg.instatiate()
-include("examples/demo_att_face.jl")
-```
-The script downloads the dataset on first run (via DataDeps.jl) and then runs:
-- Standard NMF
-- Robust NMF (Huber)
-and shows summary plots for both
-
 ---
 
 ## Demo
