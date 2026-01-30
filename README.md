@@ -165,10 +165,10 @@ For full API documentation, see [API Reference](https://tu-julia-robustnmf.githu
 
 ## Demo
 
-Run the full comparison demo:
+Run the full comparison demo. There might be a case where you should put the exact pathname of the file to make it work:
 
 ```julia
-include("examples/demo_robustnmf.jl")
+include("~/examples/demo_robustnmf.jl")
 ```
 
 This generates plots comparing Standard NMF vs. Robust NMF on multiple datasets with varying outlier levels.
