@@ -14,7 +14,7 @@ using RobustNMF
     end
    
     # L2,1-NMF algorithm tests
-    @testset "Robust NMF (L2,1)" begin
+    @testset "Robust NMF" begin
         include("test_robust_nmf.jl")
     end
     
