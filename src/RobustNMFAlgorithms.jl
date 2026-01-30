@@ -475,9 +475,6 @@ L2,1-Norm Regularized Non-negative Matrix Factorization.
 Minimizes: ||X - FG||_{2,1} where the L2,1-norm promotes robustness
 to sample-wise outliers (entire corrupted columns in `X`).
 
-NOTE: The course PDF for this project specifies robust NMF via **L1**, **Huber**, or **Itakura-Saito**,
-we keep this implementation temporarily to avoid breaking existing code during the migration.
-
 # Arguments
 - `X::AbstractMatrix{<:Real}`: Non-negative data matrix `(m, n)`.
 

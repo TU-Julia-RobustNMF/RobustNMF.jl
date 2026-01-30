@@ -57,11 +57,11 @@ X_rec = W_nmf * H_nmf
 # Run robust NMF
 W_robust, H_robust, history_robust = robustnmf(X; rank=6, maxiter=500, tol=1e-3, seed=1)
 
-# Compare relative reconstruction error
-relerr_nmf = norm(X - W_nmf * H_nmf) / norm(X)
-relerr_robust = norm(X - W_robust * H_robust) / norm(X)
-println("relative error NMF:    ", relerr_nmf)
-println("relative error robust: ", relerr_robust)
+# Compare reconstruction error (Mean Absolute Error)
+mae_nmf = mean(abs.(X - W_nmf * H_nmf))
+mae_robust = mean(abs.(X - W_robust * H_robust))
+println("MAE Standard NMF: $mae_nmf")
+println("MAE Robust NMF:   $mae_robust")
 
 # Plot convergence of both runs
 p_nmf = plot_convergence(history; objective=:frobenius, title="NMF Convergence")
