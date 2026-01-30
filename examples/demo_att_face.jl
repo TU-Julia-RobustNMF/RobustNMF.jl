@@ -39,6 +39,7 @@ function run_demo()
     # --- Run Standard NMF ---
     r = 25
     W, H, hist = nmf(X; rank=r, maxiter=200, tol=1e-6, seed=1)
+    @info "Standard NMF done" size(W) size(H) length(hist)
 
     p_std = plot_nmf_summary(
         X, W, H, hist;
@@ -53,7 +54,8 @@ function run_demo()
 
     # --- Run Robust NMF (Huber) ---
     Wr, Hr, histr = robustnmf_huber(X; rank=r, maxiter=200, tol=1e-6, delta=1.0, seed=1)
-
+    @info "Robust NMF done" size(Wr) size(Hr) length(histr)
+    
     p_rob = plot_nmf_summary(
         X, Wr, Hr, histr;
         img_shape=img_shape,
@@ -63,6 +65,11 @@ function run_demo()
         title="AT&T Faces - Robust NMF (Huber, rank=$r)"
     )
     display(p_rob)
+
+    # Optionally save plots
+    savefig(p_std, joinpath(@__DIR__, "att_faces_standard_nmf.png"))
+    savefig(p_rob, joinpath(@__DIR__, "att_faces_robust_nmf.png"))
+    @info "Saved plots to examples/"
 
     return nothing
 end
