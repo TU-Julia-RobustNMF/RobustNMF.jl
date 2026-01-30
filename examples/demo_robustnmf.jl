@@ -50,7 +50,7 @@ tol = 1e-5
 # Standard NMF on different datasets
 println("→ Running Standard NMF (L2)...")
 println("   - On clean data...")
-W_std_clean, H_std_clean, hist_std_clean = nmf(X_clean; rank=rank, maxiter=maxiter, tol=tol)
+W_std_clean, H_std_clean, hist_std_clean = nmf(X_clean; rank=rank, maxiter=maxiter, tol=tol, seed=43)
 println("     Converged in $(length(hist_std_clean)) iterations")
 
 println("   - On Gaussian noise data...")
@@ -68,7 +68,7 @@ println("     Converged in $(length(hist_std_heavy)) iterations")
 # Robust NMF (Huber) on different datasets
 println("→ Running Robust NMF (Huber)...")
 println("   - On clean data...")
-W_rob_clean, H_rob_clean, hist_rob_clean = robustnmf(X_clean; rank=rank, maxiter=maxiter, tol=1e-3, delta=1.0, seed=42)
+W_rob_clean, H_rob_clean, hist_rob_clean = robustnmf(X_clean; rank=rank, maxiter=maxiter, tol=1e-3, delta=1.0, seed=43)
 println("     Converged in $(length(hist_rob_clean)) iterations")
 
 println("   - On outlier data (5%)...")
