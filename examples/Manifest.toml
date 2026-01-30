@@ -1352,10 +1352,10 @@ uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.3.1"
 
 [[deps.RobustNMF]]
-deps = ["ColorTypes", "FileIO", "ImageIO", "Images", "LinearAlgebra", "Plots", "Random", "Statistics"]
-path = ".."
+deps = ["ColorTypes", "FileIO", "ImageIO", "Images", "LaTeXStrings", "LinearAlgebra", "Measures", "Plots", "Random", "Statistics"]
+path = "C:\\Users\\CODE\\.julia\\dev\\RobustNMF.jl\\"
 uuid = "1111f9d5-2e4d-4d00-9d07-6eab5e3037e7"
-version = "1.0.0-DEV"
+version = "1.0.0"
 
 [[deps.Rotations]]
 deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays"]
