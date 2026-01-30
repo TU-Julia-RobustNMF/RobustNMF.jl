@@ -107,7 +107,7 @@ using Statistics
     end
     
     @testset "plot_nmf_summary" begin
-        p = plot_nmf_summary(X, W, H, history; max_basis=4, max_samples=2, objective=:frobenius)
+        p = plot_nmf_summary(X, W, H, history; max_basis=4, max_samples=2)
         @test p isa Plots.Plot
         
         # Test with image shape
@@ -116,7 +116,7 @@ using Statistics
         W_img, H_img, hist_img = nmf(X_img; rank=6, maxiter=80)
         
         p_img = plot_nmf_summary(X_img, W_img, H_img, hist_img; 
-                                img_shape=(8, 8), max_basis=6, max_samples=3, objective=:frobenius)
+                                img_shape=(8, 8), max_basis=6, max_samples=3)
         @test p_img isa Plots.Plot
     end
 
@@ -171,8 +171,7 @@ end
     println("="^60)
     
     # Create output directory for plots in a writable temp location
-    output_dir = joinpath(@__DIR__, "test_plots")
-    mkpath(output_dir)
+    output_dir = mktempdir()
     
     # Generate synthetic data with noise
     println("\n1. Generating synthetic data...")
@@ -243,7 +242,7 @@ end
     
     # Summary plot
     p7 = plot_nmf_summary(X, W_clean, H_clean, hist_clean; 
-                         max_basis=4, max_samples=4, objective=:frobenius)
+                         max_basis=9, max_samples=4)
     savefig(p7, joinpath(output_dir, "nmf_summary.png"))
     println("   ✓ Saved: nmf_summary.png")
     
