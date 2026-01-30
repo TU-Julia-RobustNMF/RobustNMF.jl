@@ -70,7 +70,7 @@ function plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components
             end
             img = reshape(basis, h, w)
             p = heatmap(img, aspect_ratio=:equal, axis=nothing, border=:none,
-                       c=:grays, title="W$i", titlefontsize=8, colorbar=false)
+                       c=:grays, title="W$i", titlefontsize=8, colorbar=false, yflip=true)
         else
             # Display as 1D heatmap
             p = heatmap(reshape(basis, :, 1), aspect_ratio=:auto, 
@@ -156,7 +156,7 @@ function plot_activation_coefficients(H::AbstractMatrix; max_samples::Int=10,
     ncols = Int(ceil(sqrt(n_display)))
     nrows = Int(ceil(n_display / ncols))
     
-    plot(plots..., layout=(nrows, ncols), plot_title=title, size=(800, 600))
+    plot(plots..., layout=(nrows, ncols), plot_title=title, size=(800, 600), margin=5mm)
 end
 
 
@@ -224,9 +224,9 @@ function plot_reconstruction_comparison(X_original::AbstractMatrix, X_recon::Abs
             recon_img = reshape(recon, h, w)
             
             p1 = heatmap(orig_img, aspect_ratio=:equal, axis=nothing, border=:none,
-                        c=:grays, title="Original $i", titlefontsize=8, colorbar=false)
+                        c=:grays, title="Original $i", titlefontsize=8, colorbar=false, yflip=true)
             p2 = heatmap(recon_img, aspect_ratio=:equal, axis=nothing, border=:none,
-                        c=:grays, title="Recon $i", titlefontsize=8, colorbar=false)
+                        c=:grays, title="Recon $i", titlefontsize=8, colorbar=false, yflip=true)
             
             push!(plots, p1, p2)
         else
@@ -246,7 +246,7 @@ function plot_reconstruction_comparison(X_original::AbstractMatrix, X_recon::Abs
         layout = (nrows, ncols)
     end
     
-    plot(plots..., layout=layout, plot_title=title, size=(1000, 400))
+    plot(plots..., layout=layout, plot_title=title, size=(1000, 400), margin=7mm)
 end
 
 
@@ -429,13 +429,16 @@ function plot_nmf_summary(
     H::AbstractMatrix,
     history::Vector; 
     img_shape=nothing,
-    max_basis::Int=9,
+    max_basis::Int=4,
     max_samples::Int=4,
     objective::Symbol=:auto,
     convergence_ylabel::Union{Nothing,String}=nothing,
     title::String="NMF Summary"
 )
-    
+    # ================================
+    # Create the four main sub-figures
+    # ================================
+
     # --- Basis vectors (columns of W) ---
     p1 = plot_basis_vectors(
         W; 
@@ -468,14 +471,49 @@ function plot_nmf_summary(
         ylabel=convergence_ylabel
     )
 
-    
-    # --- Reconstruction metrics for the info panel ---
-    fro_err = norm(X - X_recon)                       # ‖X - WH‖_F
-    rel_fro_err = fro_err / (norm(X) + eps(Float64))  # relative Frobenius error
-    
+
+    # =========================
+    # Info panel: extra metrics
+    # =========================
+    # (1) Frobenius reconstruction error: baseline "distane" between X and WH.
+    # It is the most standard reconstruction metric and is comparable across runs, even if the
+    # optimization objective is different (e.g. Huber, L2,1).
+    fro_err = norm(X - X_recon)  # ‖X - WH‖_F
+
+    # (2) Relative Frobenius error: scale-normalized "distance" between X and WH.
+    # It makes runs on different datasets / scalings comparable (percent-like).
+    rel_fro_err = fro_err / (norm(X) + eps(Float64))
+
+    # (3) Explained energy (pseudo-R²): 1 - ‖X-WH‖²/‖X‖².
+    # Tells how much of X is captured by WH and helps compare ranks.
+    fro2 = fro_err^2
+    xfro2 = norm(X)^2 + eps(Float64)
+    explained_energy = 1 - fro2 / xfro2
+
+    # (4) Sparsity of W and H (fraction near zero).
+    # Sparsity is a key interpretability aspect of NMF ("parts-based" structure).
+    # A simple threshold-based sparsity is easy to interpret and good for quick diagnostics.
+    sparsity_threshold = 1e-8
+    sparsity_W = sum(W .<= sparsity_threshold) / length(W)
+    sparsity_H = sum(H .<= sparsity_threshold) / length(H)
+
+    # (5) Active components: number of rows of H that are "used" (non-trivial norm).
+    # It reveals if some components are effectively dead -> rank might be too high or 
+    # optimization got stuck.
+    rank = size(H, 1)
+    active_threshold = 1e-8
+    active_components = sum(norm(@view(H[i, :])) > active_threshold for i in 1:rank)
+
+    # (6) Objective improvement percentage (from first to last history value).
+    # A quick convergence sanity check: did we meaningfully reduce the objective?
+    initial_obj = isempty(history) ? NaN : history[1]
+    final_obj   = isempty(history) ? NaN : history[end]
+    obj_drop_pct = (!isnan(initial_obj) && initial_obj != 0) ? (initial_obj - final_obj) / initial_obj : NaN
+
+
     # Determine objective label for history (may be Frobenius², Huber, or L2,1)
     obj_label = if objective === :frobenius
-        "Objective (‖X - WH‖²_F)"
+        "Objective (Squared Frobenius)"
     elseif objective === :huber
         "Objective (Huber loss)"
     elseif objective === :l21
@@ -484,24 +522,56 @@ function plot_nmf_summary(
         "Objective"
     end
 
-    final_obj = history[end]
+    # Formal helper for percentages
+    pct = (x; digits=2) -> round(100 * x, digits=digits)
 
     # --- Info panel text ---
     info_text = """
     $(title)
-    ───────────────
-    Data size: $(size(X))
-    Rank: $(size(W, 2))
-    Iterations: $(length(history))
+    --------------------------------
     
-    Frobenius Error ‖X-WH‖_F: $(round(fro_err, digits=6))
-    Relative Frobenius Error: $(round(rel_fro_err*100, digits=2))%
+    Dataset & Model:
+    ----------------
+
+    Data size                : $(size(X))
+
+    Rank                     : $(size(W, 2))
+
+    Iterations               : $(length(history))
     
-    $obj_label: $(round(final_obj, digits=6))
+
+    Reconstruction Quality:
+    -----------------------
+
+    Frobenius Error          : $(round(fro_err, digits=6))
+
+    Relative Error           : $(pct(rel_fro_err, digits=2))%
+
+    Explained Energy         : $(pct(explained_energy, digits=2))%
+
+
+    Factor Structure:
+    -----------------
+
+    Sparsity(W)              : $(pct(sparsity_W, digits=2))%
+
+    Sparsity(H)              : $(pct(sparsity_H, digits=2))%
+
+    Active Components        : $(active_components) / $(rank)
+
+
+    Optimization:
+    -------------
+
+    $(obj_label) : $(round(final_obj, digits=6))
+    
+    Objective Reduction      : $(isnan(obj_drop_pct) ? "n/a" : string(pct(obj_drop_pct, digits=2), "%"))
     """
 
     p_info = plot(framestyle=:none, showaxis=false, ticks=false)
-    annotate!(p_info, 0.02, 0.98, text(info_text, :left, 10, :courier))
+    n_lines = count(==('\n'), info_text) + 1
+    y_start = min(0.98, 0.98 - 0.010 * n_lines)
+    annotate!(p_info, 0.03, y_start, text(info_text, :left, 10, :courier))
     
     # --- Combine plots including the info panel ---
     # Layout with five panels:
@@ -509,13 +579,13 @@ function plot_nmf_summary(
     #   middle: reconstruction (top), convergence (bottom)
     #   right:  info panel
 
-    l = @layout [[a; b] [c; d] e]
+    l = @layout [[a{0.60h}; b{0.35h}] [c{0.60h}; d{0.35h}] e{0.35w}]
 
     return plot(
         p1, p2, p3, p4, p_info;
         layout=l,
-        size=(1500, 850),
-        title=title
+        size=(2000, 1000),
+        left_margin=10mm
     )
 end
 
