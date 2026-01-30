@@ -45,3 +45,9 @@ using RobustNMF
 ---
 
 For more information, see the [GitHub repository](https://github.com/TU-Julia-RobustNMF/RobustNMF.jl).
+
+---
+
+## Acknowledgments
+
+This project was created with AI-assisted development using Claude (Anthropic) and ChatGPT (OpenAI). While AI tools were used for code generation and documentation, all code and documentation have been manually reviewed, tested, and validated by the authors to ensure quality and correctness.
