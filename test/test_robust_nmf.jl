@@ -100,6 +100,35 @@ using Statistics
         @test_throws ArgumentError robustnmf_huber(X; maxiter = 0, seed = 1)
         @test_throws ArgumentError robustnmf_huber(X; tol = 0.0, seed = 1)
     end
+
+    @testset "RobustNMFAlgorithms extra branch coverage" begin
+        # --- huber_loss / huber_weights validation branches ---
+        R = [0.0 1.0; -2.0 3.0]
+        @test_throws ArgumentError huber_loss(R, 0.0)
+        @test_throws ArgumentError huber_loss(R, -1.0)
+
+        @test_throws ArgumentError huber_weights(R, 0.0)
+        @test_throws ArgumentError huber_weights(R, -1.0)
+
+        # --- robustnmf_huber early stopping branch (break on iter 2) ---
+        X, _, _ = generate_synthetic_data(20, 15; rank=4, seed=123)
+        W, H, hist = robustnmf_huber(X; rank=4, maxiter=10, tol=1e9, delta=1.0, seed=1)
+        @test length(hist) == 2  # should break on iteration 2 due to huge tol
+
+        # --- robustnmf_huber numerical instability branch ---
+        Xnan = copy(X)
+        Xnan[1, 1] = NaN
+        @test_throws ErrorException robustnmf_huber(Xnan; rank=4, maxiter=10, tol=1e-6, delta=1.0, seed=1)
+
+        # --- robustnmf_l21: cover seed=nothing branch + convergence trunction branch ---
+        X2, _, _ = generate_synthetic_data(30, 20; rank=5, seed=42)
+
+        # tol huge forces break quickly => history trunction branch
+        F, G, history = robustnmf_l21(X2; rank=5, maxiter=50, tol=1e9, seed=nothing)
+        @test size(F) == (30, 5)
+        @test size(G) == (5, 20)
+        @test length(history) == 1
+    end
 end
 
 
