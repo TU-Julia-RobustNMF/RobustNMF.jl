@@ -56,6 +56,7 @@ end
     @test X == Y
 end
 
+
 @testset "normalize_nonnegative!" begin
     
     # Without rescaling
@@ -70,8 +71,22 @@ end
     normalize_nonnegative!(Y; rescale=true)
     @test minimum(Y) >= 0.0
     @test maximum(Y) ≈ 1.0 
-
 end
+
+
+@testset "normalize_nonnegative! extra branches" begin
+    # min_val >= 0 branch (no shifting needed)
+    X = [0.2 0.4; 0.1 0.9]
+    X_copy = copy(X)
+    normalize_nonnegative!(X; rescale=false)
+    @test X == X_copy
+
+    # rescale=true but x_val == 0 branch (avoid divide-by-zero)
+    Z = zeros(3, 3)
+    normalize_nonnegative!(Z; rescale=true)
+    @test all(Z .== 0.0)
+end
+
 
 @testset "load_image_folder" begin
     
@@ -102,6 +117,23 @@ end
 
         # Verify the error message includes the patter + dir
         @test occursin("No files matching pattern '.png' found", sprint(showerror, err.value))
+    end
+
+    @testset "load_image_folder extra error paths" begin
+        # directory doesn't exists
+        @test_throws ErrorException load_image_folder("this/path/should/now/exist"; pattern=".png")
+
+        # mismatch image sizes
+        mktempdir() do dir
+            img1 = fill(Gray(0.2), 4, 4)
+            img2 = fill(Gray(0.8), 5, 4)  # different size
+
+            save(joinpath(dir, "img1.png"), img1)
+            save(joinpath(dir, "img2.png"), img2)
+
+            err = @test_throws ErrorException load_image_folder(dir; pattern=".png", normalize=false)
+            @test occursin("All images must have same size", sprint(showerror, err.value))
+        end
     end
 
 end
