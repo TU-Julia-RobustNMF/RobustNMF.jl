@@ -77,18 +77,24 @@ plot_convergence(hist_rob; objective=:huber, title="Robust NMF Convergence")
 
 ## Running the Full Demo
 
-Run the full comparison demo. There might be a case where you should put the exact pathname of the file to make it work:
+The demo scripts use a **separate Julia environment** located in the `examples/`
+directory (`examples/Project.toml`). Before running a demo, this environment
+must be linked to the local `RobustNMF` package and have its dependencies
+installed.
+
+Run the following steps **once** after cloning the repository:
 
 ```julia
-using Pkg
-pkg.instantiate()
-
-#If you will use from the temporary package, know the filepath:
-pathof(RobustNMF)
-include("pathname/examples/demo_robustnmf.jl") 
-
-#If you will use the cloned folder of RobustNMF, proper pathname is not needed:
-include("examples/demo_robustnmf.jl") 
+julia> ]
+julia> activate examples
+julia> dev path/to/RobustNMF.jl
+julia> add Plots
+julia> instantiate
 ```
+After the setup is complete, the demos can be executed with:
 
-This generates plots comparing Standard NMF vs. Robust NMF on multiple datasets with varying outlier levels.
+```julia
+include("examples/demo_robustnmf.jl")
+include("examples/demo_att_faces.jl")
+```
+The demos generate plots comparing Standard NMF and Robust NMF under different noise and outlier conditions. All output figures are saved to `examples/outputs/`.
