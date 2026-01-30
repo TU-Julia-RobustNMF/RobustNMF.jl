@@ -44,10 +44,10 @@ function run_demo()
     p_std = plot_nmf_summary(
         X, W, H, hist;
         img_shape=img_shape,
-        max_basis=9,
-        max_samples=6,
+        max_basis=4,
+        max_samples=4,
         objective=:frobenius,
-        title="AT&T Faces - Standard NMF (rank=$r)"
+        title="AT&T Faces - Standard NMF (‖X - WH‖², rank=$r)"
     )
     display(p_std)
 
@@ -59,8 +59,8 @@ function run_demo()
     p_rob = plot_nmf_summary(
         X, Wr, Hr, histr;
         img_shape=img_shape,
-        max_basis=9,
-        max_samples=6,
+        max_basis=4,
+        max_samples=4,
         objective=:huber,
         title="AT&T Faces - Robust NMF (Huber, rank=$r)"
     )

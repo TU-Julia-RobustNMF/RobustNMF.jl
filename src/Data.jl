@@ -58,7 +58,7 @@ function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
         noise = similar(X)          # same size and element type as X
         randn!(rng, noise)          # fill with Gaussian noise N(0,1)
         X .+= noise_level .* noise  # add scaled noise
-        @. X = max(X, 0.0)          # clip negatives to 0.0
+        @. X = max(X, 0.0)          # clip negatives to 0.0 
     end
 
     return X, W, H
