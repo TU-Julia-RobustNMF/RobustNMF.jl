@@ -115,6 +115,25 @@ include("examples/demo_robustnmf.jl")
 
 It generates multiple plots that compare standard and robust NMF on clean and corrupted data.
 
+### Real-data demo: AT&T / ORL face images (grayscale)
+
+Run the exmaple from the repo root:
+```bash
+julia --project=examples -e 'include("examples/demo_att_faces.jl")'
+```
+
+or inside Julia REPL:
+```julia
+import Pkg
+Pkg.activate("examples")
+Pkg.instatiate()
+include("examples/demo_att_face.jl")
+```
+The script downloads the dataset on first run (via DataDeps.jl) and then runs:
+- Standard NMF
+- Robust NMF (Huber)
+and shows summary plots for both
+
 ---
 
 ## Tests
