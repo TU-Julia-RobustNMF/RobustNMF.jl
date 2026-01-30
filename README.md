@@ -110,6 +110,8 @@ Note: Functions ending with `!` modify inputs in-place.
 Run the comparison demo:
 
 ```julia
+using Pkg
+Pkg.instantiate()
 include("examples/demo_robustnmf.jl")
 ```
 
