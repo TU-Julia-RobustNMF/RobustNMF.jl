@@ -164,23 +164,29 @@ For full API documentation, see [API Reference](https://tu-julia-robustnmf.githu
 ---
 
 ## Demo
+### Running the demos
 
-Run the full comparison demo. There might be a case where you should put the exact pathname of the file to make it work:
+The demo scripts use a **separate Julia environment** located in the `examples/` folder  
+(`examples/Project.toml`). Before running a demo, this environment must be
+linked to the local `RobustNMF` package and have its dependencies installed.
+
+Run the following **once** after cloning the repository:
 
 ```julia
-using Pkg
-pkg.instantiate()
-
-#If you will use from the temporary package, know the filepath:
-pathof(RobustNMF)
-include("pathname/examples/demo_robustnmf.jl") 
-
-#If you will use the cloned folder of RobustNMF, proper pathname is not needed:
-include("examples/demo_robustnmf.jl") 
+julia> ]
+julia> activate examples
+julia> dev path/to/RobustNMF.jl
+julia> add Plots
+julia> instantiate
 ```
 
-This generates plots comparing Standard NMF vs. Robust NMF on multiple datasets with varying outlier levels.
+After this setup, the demos can be executed with:
+```julia
+include("examples/demo_robustnmf.jl")
+include("examples/demo_att_faces.jl")
+```
 
+The demos will automatically generate and save plots in `examples/outputs/`
 ---
 
 ## Documentation
