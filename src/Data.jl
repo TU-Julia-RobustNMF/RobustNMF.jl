@@ -6,7 +6,7 @@ using Base: basename
 
 
 """
-    generate_synthetic_data(m::Int, n::Int; rank::Int=10, noise_level::Float64=0.0, seed=nothing)
+    generate_synthetic_data(m::Int, n::Int; rank::Int=10, noise_level::Real=0.0, seed=nothing)
 
 Generate a synthetic non-negative data matrix `X` as `W * H` with random non-negative factors.
 Optionally adds Gaussian noise and clips negative values to keep `X ≥ 0`.
@@ -17,7 +17,7 @@ Optionally adds Gaussian noise and clips negative values to keep `X ≥ 0`.
 
 # Keyword Arguments
 - `rank::Int=10`: Rank of the factorization.
-- `noise_level::Float64=0.0`: Standard deviation of Gaussian noise.
+- `noise_level::Real=0.0`: Standard deviation of Gaussian noise.
 - `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
@@ -71,7 +71,7 @@ end
 
 
 """
-    add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
+    add_gaussian_noise!(X::AbstractMatrix; σ::Real=0.1, clip_at_zero::Bool=true)
 
 Add Gaussian noise with standard deviation `σ` to the matrix `X` in-place.
 Optionally clip negative entries to preserve non-negativity.
@@ -80,7 +80,7 @@ Optionally clip negative entries to preserve non-negativity.
 - `X::AbstractMatrix`: Data matrix to be corrupted.
 
 # Keyword Arguments
-- `σ::Float64=0.1`: Noise standard deviation.
+- `σ::Real=0.1`: Noise standard deviation.
 - `clip_at_zero::Bool=true`: Enforce non-negativity after corruption.
 
 # Returns
@@ -150,7 +150,7 @@ end
 # end 
 
 """
-    add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, seed=nothing)
+    add_sparse_outliers!(X::AbstractMatrix; fraction::Real=0.01, magnitude::Real=5.0, seed=nothing)
 
 Add sparse, large positive outliers to a fraction of the entries of `X` in-place.
 
@@ -158,8 +158,8 @@ Add sparse, large positive outliers to a fraction of the entries of `X` in-place
 - `X::AbstractMatrix`: Data matrix to be corrupted.
 
 # Keyword Arguments
-- `fraction::Float64=0.01`: Fraction of entries to corrupt.
-- `magnitude::Float64=5.0`: Maximum outlier amplitude.
+- `fraction::Real=0.01`: Fraction of entries to corrupt.
+- `magnitude::Real=5.0`: Maximum outlier amplitude.
 - `seed=nothing`: Optional random seed.
 
 # Returns

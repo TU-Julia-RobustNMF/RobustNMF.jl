@@ -2,7 +2,7 @@ using LinearAlgebra: norm
 using Random: Random, MersenneTwister, rand
 
 """
-    nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4, seed=nothing)
+    nmf(X; rank::Int=10, maxiter::Int=500, tol::Real=1e-4, seed=nothing)
 
 Compute a standard non-negative matrix factorization (NMF) of `X` using
 multiplicative update rules with squared Frobenius reconstruction loss.
@@ -13,7 +13,7 @@ multiplicative update rules with squared Frobenius reconstruction loss.
 # Keyword Arguments
 - `rank::Int=10`: Target factorization rank.
 - `maxiter::Int=500`: Maximum number of iterations.
-- `tol::Float64=1e-4`: Relative tolerance for stopping based on objective change.
+- `tol::Real=1e-4`: Relative tolerance for stopping based on objective change.
 - `seed=nothing`: Optional random seed for reproducible initialization.
 
 # Returns

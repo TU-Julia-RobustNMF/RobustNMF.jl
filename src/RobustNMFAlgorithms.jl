@@ -274,7 +274,7 @@ algorithm robust to sample-wise (column-wise) outliers.
 - `G::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
 
 # Keyword Arguments
-- `eps_update::Float64=1e-10`: Small constant for numerical stability.
+- `eps_update::Real=1e-10`: Small constant for numerical stability.
 
 # Returns
 - `F_new::Matrix{Float64}`: Updated basis matrix.
@@ -366,8 +366,8 @@ We optimize it using an IRLS-style weighted least squares approach:
 # Keyword Arguments
 - `rank::Int=10`: Factorization rank.
 - `maxiter::Int=500`: Maximum number of iterations.
-- `tol::Float64=1e-4`: Relative tolerance for stopping based on objective change.
-- `delta::Float64=1.0`: Huber threshold δ (must be > 0).
+- `tol::Real=1e-4`: Relative tolerance for stopping based on objective change.
+- `delta::Real=1.0`: Huber threshold δ (must be > 0).
 - `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
@@ -486,7 +486,7 @@ to sample-wise outliers (entire corrupted columns in `X`).
 # Keyword Arguments
 - `rank::Int=10`: Factorization rank.
 - `maxiter::Int=500`: Maximum number of iterations.
-- `tol::Float64=1e-4`: Absolute tolerance for stopping.
+- `tol::Real=1e-4`: Absolute tolerance for stopping.
 - `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
