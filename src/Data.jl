@@ -63,7 +63,7 @@ function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
         noise = similar(X)          # same size and element type as X
         randn!(rng, noise)          # fill with Gaussian noise N(0,1)
         X .+= noise_level .* noise  # add scaled noise
-        @. X = max(X, 0.0)          # clip negatives to 0.0
+        @. X = max(X, zero(eltype(X)))  # clip negatives to zero
     end
 
     return X, W, H
@@ -118,9 +118,9 @@ function add_gaussian_noise!(X::AbstractMatrix; σ::Real=0.1, clip_at_zero::Bool
     # Add noise to X in-place
     X .+= noise        
     
-    # Optionally enforce non-negativity by clipping at 0.0
+    # Optionally enforce non-negativity by clipping at zero
     if clip_at_zero
-        @. X = max(X, 0.0)
+        @. X = max(X, zero(eltype(X)))
     end
     
     return X

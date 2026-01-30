@@ -35,7 +35,7 @@ Returns the **sum** over all entries of `R`.
 
 # Notes
 - For `|r| ≤ δ`, the loss is quadratic; for `|r| > δ`, it is linear.
-- Summation is done in `Float64` for numerical stability.
+- Summation uses the element type of `R` for type stability.
 
 """
 function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))
@@ -45,23 +45,24 @@ function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float
         throw(ArgumentError("delta must be > 0 for Huber loss (got delta=$delta)."))
     end
 
-    # Convert delta once to Float64 to avoid repeated conversions inside loops.
-    δ = Float64(delta)
+    # Convert delta and work with element type of R
+    T = typeof(one(eltype(R)))
+    δ = convert(T, delta)
 
-    # Accumulate total loss in Float64 for numerical stability
-    total = 0.0
+    # Accumulate total loss
+    total = zero(T)
 
     # Loop explicitly for performance and to avoid temporary allocations
     @inbounds for r in R
         # Residual magnitude
-        ar = abs(Float64(r))
+        ar = abs(r)
 
         if ar <= δ
             # Quadratic region: 0.5 * r^2
-            total +=0.5 * ar * ar
+            total += T(0.5) * ar * ar
         else
             # Linear region: δ*(|r| - 0.5*δ)
-            total += δ * (ar - 0.5 * δ)
+            total += δ * (ar - T(0.5) * δ)
         end
     end
 
@@ -111,19 +112,20 @@ function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Fl
         throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
     end
 
-    δ = Float64(delta)
+    T = typeof(one(eltype(R)))
+    δ = convert(T, delta)
 
     # Allocate the weights matrix once and fill it in place
-    Ω = Matrix{Float64}(undef, size(R))
+    Ω = Matrix{T}(undef, size(R))
 
     # Fill weights entry-wise
     @inbounds for j in axes(R, 2), i in axes(R, 1)
         # Residual magnitude at entry (i, j)
-        ar = abs(Float64(R[i, j]))
+        ar = abs(R[i, j])
 
         if ar <= δ
             # Quadratic region: full weight
-            Ω[i, j] = 1.0
+            Ω[i, j] = one(T)
         else
             # Linear region: downweight large residuals
             Ω[i, j] = δ / (ar + ϵ)
@@ -217,9 +219,10 @@ function update_huber(
     H::AbstractMatrix{<:Real},
     Ω::AbstractMatrix{<:Real};
     ϵ::Real = eps(Float64))
-    
-    # Convert epsilon once
-    eps64 = Float64(ϵ)
+
+    # Convert epsilon to match the element type for numerical stability
+    T = eltype(X)
+    ϵ_T = convert(T, ϵ)  # ϵ in type T for denominators
 
     # Compute the current reconstruction once
     WH = W * H
@@ -234,7 +237,7 @@ function update_huber(
     numH = W' * ΩX
 
     # Denominator: W' * (Ω ⊙ (W*H)) + ϵ
-    denH = W' * ΩWH .+ eps64
+    denH = W' * ΩWH .+ ϵ_T
 
     # Multiplicative update (element-wise)
     H .= H .* (numH ./ denH)
@@ -248,7 +251,7 @@ function update_huber(
     numW = ΩX * H'
 
     # Denominator: (Ω ⊙ (W*H)) * H' + ϵ
-    denW = ΩWH * H' .+ eps64
+    denW = ΩWH * H' .+ ϵ_T
 
     # Multiplicative update (element-wise)
     W .= W .* (numW ./ denW)
@@ -293,13 +296,14 @@ function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
     
     m, n = size(X)
     rank = size(F, 2)
-    
+    T = eltype(X)
+
     # Compute diagonal weight matrix D
     # d[i] = 1 / (2 * ||x_i - F*g_i||_2)
-    d = zeros(n)
+    d = zeros(T, n)
     for i in 1:n
         residual_norm = norm(X[:, i] - F * G[:, i])
-        d[i] = 1.0 / (2.0 * residual_norm + eps_update)
+        d[i] = one(T) / (T(2) * residual_norm + eps_update)
     end
     D = Diagonal(d)
     
@@ -423,17 +427,18 @@ function robustnmf_huber(
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
     m, n = size(X)
+    T = eltype(X)
 
     # Initialize W and H with random non-negative values
-    W = rand(rng, m, rank)
-    H = rand(rng, rank, n)
+    W = rand(rng, T, m, rank)
+    H = rand(rng, T, rank, n)
 
     # Small constant to avoid division by zero in multiplicative updates
-    ϵ = eps(Float64)
+    ϵ = eps(T)
 
     # Track objective history (Huber loss values)
-    history = Float64[]
-    prev_obj = Inf
+    history = T[]
+    prev_obj = T(Inf)
 
     # --- Main optimization loop ---
     for iter in 1:maxiter
@@ -527,13 +532,14 @@ function robustnmf_l21(X::AbstractMatrix{<:Real};
     end
     
     m, n = size(X)
-    
+    T = eltype(X)
+
     # Initialize F and G with random non-negative values
-    F = rand(m, rank) .* 0.5 .+ 0.1
-    G = rand(rank, n) .* 0.5 .+ 0.1
-    
+    F = rand(T, m, rank) .* T(0.5) .+ T(0.1)
+    G = rand(T, rank, n) .* T(0.5) .+ T(0.1)
+
     # Track convergence history
-    history = zeros(Float64, maxiter)
+    history = zeros(T, maxiter)
     
     # Iterative updates
     for iter in 1:maxiter

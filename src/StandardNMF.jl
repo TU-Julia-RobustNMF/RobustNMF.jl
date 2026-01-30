@@ -48,15 +48,16 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothi
         rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
         m, n = size(X)
-        W = rand(rng, m, rank)
-        H = rand(rng, rank, n)
+        T = eltype(X)
+        W = rand(rng, T, m, rank)
+        H = rand(rng, T, rank, n)
 
         # @assert minimum(X) >= 0 "X must be non-negative"
 
-        ϵ = eps(Float64)
+        ϵ = eps(T)
 
-        history = Float64[]
-        prev_obj = Inf
+        history = T[]
+        prev_obj = T(Inf)
         
 
         # updating H and W 
