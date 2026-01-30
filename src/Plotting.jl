@@ -1,33 +1,47 @@
 using Plots
-using Measures
-using LinearAlgebra
+using LinearAlgebra: norm
 
 """
-    plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16, 
-                      title::String="Basis Vectors (W)", layout=nothing)
+    plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16,
+                       title::String="Basis Vectors (W)", layout=nothing)
 
-Visualize the basis vectors (columns of W) as heatmaps or images.
+Visualize the basis vectors (columns of `W`) as heatmaps or images.
 
 # Arguments
-- `W::AbstractMatrix`: Basis matrix of size (m, rank).
+- `W::AbstractMatrix`: Basis matrix of size `(m, rank)`.
 
 # Keyword Arguments
-- `img_shape`: Tuple `(height, width)` to reshape each basis vector as an image. 
-               If `nothing`, displays as 1D heatmaps.
+- `img_shape`: Tuple `(height, width)` to reshape each basis vector as an image.
+  If `nothing`, displays as 1D heatmaps.
 - `max_components::Int=16`: Maximum number of components to display.
 - `title::String`: Plot title.
-- `layout`: Custom layout tuple (rows, cols). If `nothing`, auto-computed.
+- `layout`: Custom layout tuple `(rows, cols)`. If `nothing`, auto-computed.
 
 # Returns
-- A `Plots.Plot` object showing the basis vectors.
+- `p::Plots.Plot`: Plot object showing the basis vectors.
+
+# Side Effects
+- None.
+
+# Errors
+- `ErrorException`: If `img_shape` does not match the length of a basis vector.
+
+# Notes
+- The number of displayed components is `min(rank, max_components)`.
+- Layout is chosen to be roughly square when not provided.
 
 # Examples
-```julia
-W, H, _ = nmf(X; rank=10)
-plot_basis_vectors(W; max_components=10)
+```jldoctest
+julia> using RobustNMF, Plots
 
-# For image data with known dimensions
-plot_basis_vectors(W; img_shape=(28, 28), max_components=16)
+julia> X, _, _ = generate_synthetic_data(40, 30; rank=6, seed=1);
+
+julia> W, _, _ = nmf(X; rank=6, maxiter=50, tol=1e-5, seed=42);
+
+julia> p = plot_basis_vectors(W; max_components=6);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16,
@@ -78,25 +92,43 @@ end
 
 
 """
-    plot_activation_coefficients(H::AbstractMatrix; max_samples::Int=10, 
+    plot_activation_coefficients(H::AbstractMatrix; max_samples::Int=10,
                                  title::String="Activation Coefficients (H)")
 
-Visualize the activation coefficient matrix H as a heatmap or as individual sample profiles.
+Visualize the activation coefficient matrix `H` as a heatmap or as individual sample profiles.
 
 # Arguments
-- `H::AbstractMatrix`: Coefficient matrix of size (rank, n).
+- `H::AbstractMatrix`: Coefficient matrix of size `(rank, n)`.
 
 # Keyword Arguments
 - `max_samples::Int=10`: Maximum number of samples to display (if showing individual profiles).
 - `title::String`: Plot title.
 
 # Returns
-- A `Plots.Plot` object.
+- `p::Plots.Plot`: Plot object.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- If `n ≤ 100` and `rank ≤ 50`, a full heatmap is shown.
+- Otherwise, bar plots for up to `max_samples` samples are shown.
 
 # Examples
-```julia
-W, H, _ = nmf(X; rank=10)
-plot_activation_coefficients(H)
+```jldoctest
+julia> using RobustNMF, Plots
+
+julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=2);
+
+julia> _, H, _ = nmf(X; rank=5, maxiter=50, tol=1e-5, seed=99);
+
+julia> p = plot_activation_coefficients(H; max_samples=5);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_activation_coefficients(H::AbstractMatrix; max_samples::Int=10,
@@ -137,7 +169,7 @@ Compare original data with reconstructed data side by side.
 
 # Arguments
 - `X_original::AbstractMatrix`: Original data matrix.
-- `X_recon::AbstractMatrix`: Reconstructed data matrix (W * H).
+- `X_recon::AbstractMatrix`: Reconstructed data matrix (`W * H`).
 
 # Keyword Arguments
 - `img_shape`: Tuple `(height, width)` for reshaping columns as images.
@@ -145,13 +177,31 @@ Compare original data with reconstructed data side by side.
 - `title::String`: Plot title.
 
 # Returns
-- A `Plots.Plot` object showing original vs reconstructed samples.
+- `p::Plots.Plot`: Plot object showing original vs reconstructed samples.
+
+# Side Effects
+- None.
+
+# Errors
+- `AssertionError`: If `X_original` and `X_recon` have different dimensions.
+- `ErrorException`: If `img_shape` is incompatible with column length.
+
+# Notes
+- For image data, each sample is displayed as an image pair.
+- For vector data, each sample is plotted as a line comparison.
 
 # Examples
-```julia
-W, H, _ = nmf(X; rank=10)
-X_recon = W * H
-plot_reconstruction_comparison(X, X_recon; img_shape=(28, 28), n_samples=6)
+```jldoctest
+julia> using RobustNMF, Plots
+
+julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=3);
+
+julia> W, H, _ = nmf(X; rank=4, maxiter=50, tol=1e-5, seed=100);
+
+julia> p = plot_reconstruction_comparison(X, W * H; n_samples=3);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_reconstruction_comparison(X_original::AbstractMatrix, X_recon::AbstractMatrix;
@@ -204,7 +254,7 @@ end
     plot_convergence(history::Vector;
                      title::String="NMF Convergence",
                      objective::Symbol=:auto,
-                     ylabel::Union{Nothing,String}=nothing, 
+                     ylabel::Union{Nothing,String}=nothing,
                      log_scale::Bool=true)
 
 Plot the convergence history (`history`) produced by an NMF routine.
@@ -219,24 +269,42 @@ This function is intentionally objective-agnostic: depending on the algorithm,
 # Keyword Arguments
 - `title::String`: Plot title.
 - `objective::Symbol=:auto`: Hint for labeling the objective.
-    - `:frobenius` → "Frobenius Error"
-    - `:huber`     → "Huber Loss"
-    - `:l21`       → "L2,1 Loss"
-    - `:auto`      → "Objective" (neutral default)
+  - `:frobenius` → "Frobenius Error"
+  - `:huber`     → "Huber Loss"
+  - `:l21`       → "L2,1 Loss"
+  - `:auto`      → "Objective" (neutral default)
 - `ylabel::Union{Nothing,String}=nothing`: Explicit y-axis label.
-If provided, this ovverrides `objective`.
+  If provided, this overrides `objective`.
 - `log_scale::Bool=true`: Use logarithmic scale for y-axis.
 
 # Returns
-- A `Plots.Plot` object.
+- `p::Plots.Plot`: Plot object.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Log scaling helps visualize early convergence behavior.
 
 # Examples
-```julia
-W, H, history = nmf(X; rank=10, maxiter=500)
-plot_convergence(history; objective=:frobenius)
+```jldoctest
+julia> using RobustNMF, Plots
 
-W, H, history = robustnmf(X; rank=10, maxiter=500)
-plot_convergence(history; objective=:huber)
+julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=4);
+
+julia> _, _, history = nmf(X; rank=4, maxiter=500, tol=1e-5, seed=101);
+
+julia> p = plot_convergence(history; objective=:frobenius);
+
+julia> _, _, history = robustnmf(X; rank=10, maxiter=500);
+
+julia> plot_convergence(history; objective=:huber);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_convergence(
@@ -278,16 +346,16 @@ end
 
 
 """
-    plot_nmf_summary(X::AbstractMatrix, 
-                     W::AbstractMatrix, 
-                     H::AbstractMatrix, 
-                     history::Vector; 
-                     img_shape=nothing, 
-                     title::String="NMF Summary",
-                     max_basis::Int=10,
-                     max_samples::Int=10,
+    plot_nmf_summary(X::AbstractMatrix,
+                     W::AbstractMatrix,
+                     H::AbstractMatrix,
+                     history::Vector;
+                     img_shape=nothing,
+                     max_basis::Int=9,
+                     max_samples::Int=4,
                      objective::Symbol=:auto,
-                     convergence_ylabel::Union{Nothing,String}=nothing)
+                     convergence_ylabel::Union{Nothing,String}=nothing,
+                     title::String="NMF Summary")
 
 Create a summary visualization for an NMF result.
 
@@ -299,7 +367,7 @@ The summary consists of:
 
 This function is **algorithm-agnostic** and works for:
 - Standard NMF (Frobenius objective)
-- Robist NMF with Huber loss
+- Robust NMF with Huber loss
 - Legacy L2,1 NMF
 
 # Arguments
@@ -310,40 +378,49 @@ This function is **algorithm-agnostic** and works for:
 
 # Keyword Arguments
 - `img_shape`: Optional tuple `(height, width)` if columns of `X` or `W` represent vectorized images.
-- `title`: Overalltitle for the summary figure.
-- `max_basis::Int=10`: Maximum number of basis vectors (columns of `W`) to visualize.
-- `max_samples::Int=10`: Maximum number of samples / activations to visualize.
-- `objective`: Type of objective used to generate `history`.
-    - `:frobenius` → squared Frobenius reconstruction objective
-    - `:huber`     → Huber loss (robust NMF)
-    - `:l21`       → L2,1 Loss
-    - `:auto`      → neutral label ("Objective")
-- `convergence_ylabel`: Optional explicit y-axis label for the convergence plot.
+- `max_basis::Int=9`: Maximum number of basis vectors (columns of `W`) to visualize.
+- `max_samples::Int=4`: Maximum number of samples / activations to visualize.
+- `objective::Symbol=:auto`: Type of objective used to generate `history`.
+  - `:frobenius` → squared Frobenius reconstruction objective
+  - `:huber`     → Huber loss (robust NMF)
+  - `:l21`       → L2,1 loss
+  - `:auto`      → neutral label ("Objective")
+- `convergence_ylabel::Union{Nothing,String}=nothing`: Explicit y-axis label for the convergence plot.
   If provided, this overrides the label implied by `objective`.
+- `title::String="NMF Summary"`: Overall title for the summary figure.
 
 # Returns
-- A `Plots.Plot` object with a comprehensive summary.
+- `p::Plots.Plot`: Plot object with a comprehensive summary.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Includes a text panel with error metrics and iteration count.
+- For image data, set `img_shape` to visualize basis vectors and reconstructions.
 
 # Examples
-```julia
-# --- Standard NMF ---
-W, H, history = nmf(X; rank=10, maxiter=500)
-plot_nmf_summary(
-    X, W, H, history;
-    objective=:frobenius
-    img_shape=(28, 28)
-)
+This example runs the summary once for standard NMF and once for robust NMF (Huber).
+```jldoctest
+julia> using RobustNMF, Plots
 
-# --- Robust NMF (Huber loss) ---
-W, H, history = robustnmf(X; rank=10, maxiter=500, delta=1.0)
-plot_nmf_summary(
-    X, W, H, history;
-    objective=:huber
-    img_shape=(28, 28)
-)
+julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 
-# --- Neutral / algorithm-agnostic usage ---
-plot_nmf_summary(X, W, H, history)
+julia> W, H, history = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=102);
+
+julia> p = plot_nmf_summary(X, W, H, history; objective=:frobenius, max_basis=4, max_samples=2);
+
+julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
+
+julia> W, H, history = robustnmf(X; rank=5, maxiter=40, tol=1e-5, seed=103);
+
+julia> p = plot_nmf_summary(X, W, H, history; objective=:huber, max_basis=4, max_samples=2);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_nmf_summary(
@@ -515,7 +592,7 @@ end
 
 """
     plot_image_reconstruction(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix,
-                             img_shape::Tuple{Int,Int}; indices=nothing, n_images::Int=5)
+                              img_shape::Tuple{Int,Int}; indices=nothing, n_images::Int=5)
 
 Specialized function for visualizing image reconstruction quality.
 Shows original, reconstructed, and difference images side by side.
@@ -524,19 +601,37 @@ Shows original, reconstructed, and difference images side by side.
 - `X::AbstractMatrix`: Original image data (each column is a flattened image).
 - `W::AbstractMatrix`: Basis matrix.
 - `H::AbstractMatrix`: Coefficient matrix.
-- `img_shape::Tuple{Int,Int}`: Image dimensions (height, width).
+- `img_shape::Tuple{Int,Int}`: Image dimensions `(height, width)`.
 
 # Keyword Arguments
 - `indices`: Specific image indices to display. If `nothing`, randomly selected.
 - `n_images::Int=5`: Number of images to display.
 
 # Returns
-- A `Plots.Plot` object.
+- `p::Plots.Plot`: Plot object.
+
+# Side Effects
+- None.
+
+# Errors
+- `ErrorException`: If `img_shape` does not match column length.
+
+# Notes
+- The difference image uses absolute error `|X - W*H|`.
+- If `indices` is provided, only the first `n_images` indices are used.
 
 # Examples
-```julia
-W, H, _ = nmf(X; rank=20)
-plot_image_reconstruction(X, W, H, (64, 64); n_images=6)
+```jldoctest
+julia> using RobustNMF, Plots
+
+julia> X, _, _ = generate_synthetic_data(100, 8; rank=5, seed=6);
+
+julia> W, H, _ = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=104);
+
+julia> p = plot_image_reconstruction(X, W, H, (10, 10); n_images=3);
+
+julia> p isa Plots.Plot
+true
 ```
 """
 function plot_image_reconstruction(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix,

@@ -1,20 +1,15 @@
-using Random, LinearAlgebra, Statistics
+using Random: Random, MersenneTwister, rand, randn!
 using FileIO: load
 using ImageIO
-using Images: channelview, colorview
 using ColorTypes: Gray
 using Base: basename
 
 
 """
-
     generate_synthetic_data(m::Int, n::Int; rank::Int=10, noise_level::Float64=0.0, seed=nothing)
 
-Generate a non-negative matrix `X ∈ R^{m×n}` by sampling non-negative factors `W (m×rank)` and
-`H (rank×n)` and returning `(X, W, H)`.
-
-Optionally add Gaussian noise with standard deviation `noise_level` and clip the result at `0.0`
-to keep `X` non-negative.
+Generate a synthetic non-negative data matrix `X` as `W * H` with random non-negative factors.
+Optionally adds Gaussian noise and clips negative values to keep `X ≥ 0`.
 
 # Arguments
 - `m::Int`: Number of rows of `X`.
@@ -23,12 +18,22 @@ to keep `X` non-negative.
 # Keyword Arguments
 - `rank::Int=10`: Rank of the factorization.
 - `noise_level::Float64=0.0`: Standard deviation of Gaussian noise.
-- `seed`: Optional random seed for reproducibility.
+- `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
 - `X::Matrix{Float64}`: Generated non-negative data matrix.
-- `W::Matrix{Float64}`: Left factor.
-- `H::Matrix{Float64}`: Right factor.
+- `W::Matrix{Float64}`: Left factor of size `(m, rank)`.
+- `H::Matrix{Float64}`: Right factor of size `(rank, n)`.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Uses a local RNG seeded with `seed` (if provided) for deterministic output.
+- When `noise_level > 0`, the result is clipped at `0.0` to enforce non-negativity.
 
 # Examples
 ```jldoctest
@@ -41,8 +46,8 @@ julia> minimum(X) >= 0
 true
 ```
 """
-function generate_synthetic_data(m::Int, n::Int; rank::Int=10, 
-    noise_level::Float64=0.0, seed=nothing)
+function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
+    noise_level::Real=0.0, seed=nothing)
     
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
@@ -58,7 +63,7 @@ function generate_synthetic_data(m::Int, n::Int; rank::Int=10,
         noise = similar(X)          # same size and element type as X
         randn!(rng, noise)          # fill with Gaussian noise N(0,1)
         X .+= noise_level .* noise  # add scaled noise
-        @. X = max(X, 0.0)          # clip negatives to 0.0 
+        @. X = max(X, zero(eltype(X)))  # clip negatives to zero
     end
 
     return X, W, H
@@ -66,13 +71,10 @@ end
 
 
 """
-
     add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
 
 Add Gaussian noise with standard deviation `σ` to the matrix `X` in-place.
-
-If `clip_at_zero` is `true`, replace all negative entries of `X` with `0.0` after adding noise,
-to preserve non-negativity.
+Optionally clip negative entries to preserve non-negativity.
 
 # Arguments
 - `X::AbstractMatrix`: Data matrix to be corrupted.
@@ -82,7 +84,17 @@ to preserve non-negativity.
 - `clip_at_zero::Bool=true`: Enforce non-negativity after corruption.
 
 # Returns
-- `X`: The modified input matrix.
+- `X`: The modified input matrix (in-place).
+
+# Side Effects
+- Modifies `X` in-place.
+
+# Errors
+- None.
+
+# Notes
+- Uses `randn!` to generate Gaussian noise.
+- If `clip_at_zero=true`, negative values are replaced by `0.0`.
 
 # Examples
 ```jldoctest
@@ -94,7 +106,7 @@ julia> minimum(X) >= 0
 true
 ```
 """
-function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::Bool=true)
+function add_gaussian_noise!(X::AbstractMatrix; σ::Real=0.1, clip_at_zero::Bool=true)
     
     # Allocate temporary noise buffer with same size/type as X
     noise = similar(X)
@@ -106,9 +118,9 @@ function add_gaussian_noise!(X::AbstractMatrix; σ::Float64=0.1, clip_at_zero::B
     # Add noise to X in-place
     X .+= noise        
     
-    # Optionally enforce non-negativity by clipping at 0.0
+    # Optionally enforce non-negativity by clipping at zero
     if clip_at_zero
-        @. X = max(X, 0.0)
+        @. X = max(X, zero(eltype(X)))
     end
     
     return X
@@ -138,15 +150,9 @@ end
 # end 
 
 """
+    add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, seed=nothing)
 
-    add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
-    seed=nothing)
-
-Add sparcse, large positive outliers to a fraction of the entries of `X` in-place.
-
-`fraction` controls the proportion of entries that are modified.
-Each selected entry is increased by a random value drawn from `Uniform(0, magnitude)`.
-If `seed` is provided, the random choices are reproducible.
+Add sparse, large positive outliers to a fraction of the entries of `X` in-place.
 
 # Arguments
 - `X::AbstractMatrix`: Data matrix to be corrupted.
@@ -154,10 +160,20 @@ If `seed` is provided, the random choices are reproducible.
 # Keyword Arguments
 - `fraction::Float64=0.01`: Fraction of entries to corrupt.
 - `magnitude::Float64=5.0`: Maximum outlier amplitude.
-- `seed`: Optional random seed.
+- `seed=nothing`: Optional random seed.
 
 # Returns
-- `X`: The modified input matrix.
+- `X`: The modified input matrix (in-place).
+
+# Side Effects
+- Modifies `X` in-place.
+
+# Errors
+- None.
+
+# Notes
+- Corrupts `max(1, round(Int, fraction * m*n))` entries.
+- Added outliers are sampled from `Uniform(0, magnitude)`.
 
 # Examples
 ```jldoctest
@@ -165,11 +181,11 @@ julia> X = zeros(10, 10);
 
 julia> add_sparse_outliers!(X; fraction=0.05, seed=1);
 
-julia> count(x -> x > 0, X) > 0
+julia> count(>(0.0), X) > 0
 true
 ```
 """
-function add_sparse_outliers!(X::AbstractMatrix; fraction::Float64=0.01, magnitude::Float64=5.0, 
+function add_sparse_outliers!(X::AbstractMatrix; fraction::Real=0.01, magnitude::Real=5.0,
     seed=nothing)
 
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
@@ -190,21 +206,27 @@ end
 
 
 """
-
     normalize_nonnegative!(X::AbstractMatrix; rescale::Bool=true)
 
-Shift the matrix `X` in-place so that its minimum value becomes `0.0` if it is negative.
-If `rescale` is `true`, also divide `X` by its maximum value so that all entries lie in the
-interval `[0, 1]`.
+Shift `X` in-place so that the minimum becomes `0.0`, and optionally rescale to `[0, 1]`.
 
 # Arguments
 - `X::AbstractMatrix`: Input matrix.
 
 # Keyword Arguments
-- `rescale::Bool=true`: Whether to divide by the maximum value.
+- `rescale::Bool=true`: Whether to divide by the maximum value after shifting.
 
 # Returns
-- `X`: The normalized matrix.
+- `X`: The normalized matrix (in-place).
+
+# Side Effects
+- Modifies `X` in-place.
+
+# Errors
+- None.
+
+# Notes
+- If `rescale=true` and `maximum(X) == 0`, rescaling is skipped.
 
 # Examples
 ```jldoctest
@@ -238,36 +260,36 @@ end
 
 
 """
-
     load_image_folder(dir::AbstractString; pattern::AbstractString=".png", normalize::Bool=true)
 
-Load all images in `dir` whose filenames match `pattern`, convert them to grayscale if needed,
-flatten them, and stack them as columns of a data matrix `X`.
-
-Returns a tuple `(X, (height, width), filenames)`, where:
-- `X :: Matrix{Float64}` has one column per image,
-- `(height, width)` is the original image size,
-- `filenames` is a vector of the loaded base filenames.
-
-If `normalize` is `true`, the matrix `X` is shifted and rescaled to be non-negative with entries
-in `[0, 1]`.
-
+Load images from a folder, convert to grayscale, flatten, and stack them as columns of `X`.
 
 # Arguments
 - `dir::AbstractString`: Path to the image directory.
 
 # Keyword Arguments
-- `pattern::AbstractString="*.png"`: File extension filter.
+- `pattern::AbstractString=".png"`: File extension filter (matched via `endswith`).
 - `normalize::Bool=true`: Normalize output matrix to `[0, 1]`.
 
 # Returns
 - `X::Matrix{Float64}`: One column per image.
 - `(height, width)`: Original image dimensions.
-- `filenames::Vector{String}`: Loaded file names.
+- `filenames::Vector{String}`: Loaded base file names.
+
+# Side Effects
+- Reads image files from disk.
+
+# Errors
+- `ErrorException`: If the directory does not exist or no files match `pattern`.
+- `ErrorException`: If images have inconsistent sizes.
+
+# Notes
+- Images are converted to grayscale and stored as `Float64`.
+- If `normalize=true`, `normalize_nonnegative!` is applied to `X`.
 
 # Examples
 ```jldoctest
-julia> # X, size, names = load_image_folder("faces/")
+julia> # X, size, names = load_image_folder(\"faces/\")
 ```
 """
 function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", normalize::Bool=true)
@@ -322,5 +344,3 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", 
     return X, (h, w), filenames
 
 end
-
-

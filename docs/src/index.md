@@ -1,64 +1,53 @@
-# Getting Started with RobustNMF.jl
+# RobustNMF.jl
 
-## Installation
+Welcome to **RobustNMF.jl** - Robust Non-negative Matrix Factorization in Julia for data with noise and outliers.
 
-Clone the repository and activate the project environment.
-The following steps work when executed from the repository root directory.
+## Overview
 
-```julia
-# Enter the Julia package manager
-]
+This package provides two complementary algorithms for non-negative matrix factorization:
 
-# Activate the local project environment
-activate .
+- **Standard NMF** - Optimized for clean data using L2 (Frobenius) loss
+- **Robust NMF (Huber)** - Robust to outliers using Huber loss with IRLS updates
 
-# Install all required dependencies
-instantiate
-```
+The **Huber loss** combines the best of both worlds:
+- Small errors: quadratic (precise, like L2)
+- Large errors: linear (robust, like L1)
 
-## Basic Usage
+## Key Features
 
-Import the package:
-
-```julia
-using RobustNMF
-```
-
-## Simple Example
-
-Perform robust non-negative matrix factorization:
-
-```julia
-
-# Generate synthetic non-negative data
-X, W, H = generate_synthetic_data(20, 30)
-
-# Add Gaussian noise (in-place)
-add_gaussian_noise!(X, σ = 0.2)
-
-# Add sparse outliers (in-place)
-add_sparse_outliers!(X, fraction = 0.04, magnitude = 5.2)
-
-# Normalize and rescale data to non-negative range
-normalize_nonnegative!(X)
-
-# Run standard NMF
-W_nmf, H_nmf, history = nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
-
-# Reconstruct the data matrix (X)
-X_rec = W_nmf * H_nmf
-
-# Run robust NMF
-W_robust, H_robust, history_robust = robust_nmf(X, rank = 12, maxiter = 3000, tol = 1e-6)
-
-```
+- **Two NMF algorithms** - Standard and Robust (Huber loss) options
+- **Data utilities** - Synthetic data generation, noise/outlier injection, normalization, image loading
+- **Visualization** - Basis vectors, reconstructions, convergence tracking, and comprehensive summaries
+- **Easy comparison** - Evaluate both algorithms on the same data
 
 ---
 
-## Notes
+## Quick Navigation
 
--   All input data must be non-negative.
+- **[Getting Started](getting_started.md)** - Installation and first example
+- **[API Reference](api.md)** - Complete function documentation
+- **[Examples](examples.md)** - Practical use cases and workflows
 
--   Functions with a ! modify their input in-place.
+---
 
--   The reconstructed matrix X_rec approximates the original data X.
+## Installation
+
+Install directly from GitHub:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/TU-Julia-RobustNMF/RobustNMF.jl")
+using RobustNMF
+```
+
+**Requirements:** Julia 1.11+ (see `Project.toml`)
+
+---
+
+For more information, see the [GitHub repository](https://github.com/TU-Julia-RobustNMF/RobustNMF.jl).
+
+---
+
+## Acknowledgments
+
+This project was created with AI-assisted development using Claude (Anthropic) and ChatGPT (OpenAI). While AI tools were sometimes used for code generation and documentation, all code and documentation have been manually reviewed, tested, and validated by the authors to ensure quality and correctness.

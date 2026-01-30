@@ -18,6 +18,8 @@ and loading image datasets into matrix form suitable for NMF.
 - **Preprocessing Utilities**: Non-negativity enforcement and normalization.
 - **Image Loading**: Load and vectorize grayscale images from folders.
 - **Standard NMF**: Factorization and reconstruction utilities.
+- **Robust NMF (Huber)**: IRLS-weighted multiplicative updates (default robust method).
+- **Legacy Robust NMF (L2,1)**: Kept temporarily for compatibility.
 
 # Exports
 - **Data Utilities**:
@@ -29,7 +31,9 @@ and loading image datasets into matrix form suitable for NMF.
 
 - **NMF Algorithms**:
   - `nmf`
-  - `X_reconstruct`
+  - `robustnmf` (default Huber)
+  - `robustnmf_huber`
+  - `robustnmf_l21` (legacy)
 
 # Examples
 ```jldoctest
@@ -72,4 +76,3 @@ plot_nmf_summary, plot_image_reconstruction
 
 #QUESTION l21_loss not used? just in example in RobustNMFAlgorithms
 end # module RobustNMF
-
