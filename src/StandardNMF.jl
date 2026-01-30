@@ -1,4 +1,5 @@
-using LinearAlgebra, Random
+using LinearAlgebra: norm
+using Random: Random, MersenneTwister, rand
 
 """
     nmf(X; rank::Int=10, maxiter::Int=500, tol::Float64=1e-4, seed=nothing)

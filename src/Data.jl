@@ -1,7 +1,6 @@
-using Random, LinearAlgebra, Statistics
+using Random: Random, MersenneTwister, rand, randn!
 using FileIO: load
 using ImageIO
-using Images: channelview, colorview
 using ColorTypes: Gray
 using Base: basename
 

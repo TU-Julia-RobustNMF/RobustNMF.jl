@@ -1,5 +1,5 @@
 using Plots
-using LinearAlgebra
+using LinearAlgebra: norm
 
 """
     plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components::Int=16,

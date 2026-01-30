@@ -190,7 +190,7 @@ To run tests:
 
 ```julia
 using Pkg
-Pkg.test()
+Pkg.test("RobustNMF")
 ```
 
 ---
