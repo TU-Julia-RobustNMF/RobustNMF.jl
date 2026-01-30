@@ -36,7 +36,7 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(40, 30; rank=6, seed=1);
 
-julia> W, _, _ = nmf(X; rank=6, maxiter=50, tol=1e-5, seed=1);
+julia> W, _, _ = nmf(X; rank=6, maxiter=50, tol=1e-5, seed=42);
 
 julia> p = plot_basis_vectors(W; max_components=6);
 
@@ -123,7 +123,7 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=2);
 
-julia> _, H, _ = nmf(X; rank=5, maxiter=50, tol=1e-5, seed=2);
+julia> _, H, _ = nmf(X; rank=5, maxiter=50, tol=1e-5, seed=99);
 
 julia> p = plot_activation_coefficients(H; max_samples=5);
 
@@ -196,7 +196,7 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=3);
 
-julia> W, H, _ = nmf(X; rank=4, maxiter=50, tol=1e-5, seed=3);
+julia> W, H, _ = nmf(X; rank=4, maxiter=50, tol=1e-5, seed=100);
 
 julia> p = plot_reconstruction_comparison(X, W * H; n_samples=3);
 
@@ -295,7 +295,7 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=4);
 
-julia> _, _, history = nmf(X; rank=4, maxiter=500, tol=1e-5, seed=4);
+julia> _, _, history = nmf(X; rank=4, maxiter=500, tol=1e-5, seed=101);
 
 julia> p = plot_convergence(history; objective=:frobenius);
 
@@ -409,13 +409,13 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 
-julia> W, H, history = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=5);
+julia> W, H, history = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=102);
 
 julia> p = plot_nmf_summary(X, W, H, history; objective=:frobenius, max_basis=4, max_samples=2);
 
 julia> X, _, _ = generate_synthetic_data(30, 20; rank=5, seed=5);
 
-julia> W, H, history = robustnmf(X; rank=5, maxiter=40, tol=1e-5, seed=5);
+julia> W, H, history = robustnmf(X; rank=5, maxiter=40, tol=1e-5, seed=103);
 
 julia> p = plot_nmf_summary(X, W, H, history; objective=:huber, max_basis=4, max_samples=2);
 
@@ -556,7 +556,7 @@ julia> using RobustNMF, Plots
 
 julia> X, _, _ = generate_synthetic_data(100, 8; rank=5, seed=6);
 
-julia> W, H, _ = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=6);
+julia> W, H, _ = nmf(X; rank=5, maxiter=40, tol=1e-5, seed=104);
 
 julia> p = plot_image_reconstruction(X, W, H, (10, 10); n_images=3);
 

@@ -141,7 +141,7 @@ plot_basis_vectors(W_rob; max_components=9, title="Robust NMF Basis")
 - `plot_activation_coefficients(H; ...)` - Show coefficient matrix
 - `plot_image_reconstruction(X, X_recon; ...)` - Image-specific visualization
 
-For full API documentation, see [API Reference](https://tu-julia-robustnmf.github.io/RobustNMF.jl/stable/functions/).
+For full API documentation, see [API Reference](https://tu-julia-robustnmf.github.io/RobustNMF.jl/stable/api/).
 
 ---
 
@@ -179,7 +179,7 @@ This generates plots comparing Standard NMF vs. Robust NMF on multiple datasets 
 
 For detailed information:
 
-- **[Full API Reference](https://tu-julia-robustnmf.github.io/RobustNMF.jl/stable/functions/)** - All functions documented
+- **[Full API Reference](https://tu-julia-robustnmf.github.io/RobustNMF.jl/stable/api/)** - All functions documented
 - **[Getting Started Guide](https://tu-julia-robustnmf.github.io/RobustNMF.jl/stable/getting_started/)** - Step-by-step introduction
 
 ---

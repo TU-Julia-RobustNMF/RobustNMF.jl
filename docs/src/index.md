@@ -1,71 +1,47 @@
-# Getting Started with RobustNMF.jl
+# RobustNMF.jl
 
-## Installation
+Welcome to **RobustNMF.jl** - Robust Non-negative Matrix Factorization in Julia for data with noise and outliers.
 
-Install via the Julia package manager using the Git URL (since the package is not registered):
+## Overview
 
-```julia
-]
-add https://github.com/TU-Julia-RobustNMF/RobustNMF.jl.git
-```
+This package provides two complementary algorithms for non-negative matrix factorization:
 
-Julia version: `1.11`.
+- **Standard NMF** - Optimized for clean data using L2 (Frobenius) loss
+- **Robust NMF (Huber)** - Robust to outliers using Huber loss with IRLS updates
 
-## Basic Usage
+The **Huber loss** combines the best of both worlds:
+- Small errors: quadratic (precise, like L2)
+- Large errors: linear (robust, like L1)
 
-Import the package:
+## Key Features
 
-```julia
-using RobustNMF
-```
-
-## Simple Example
-
-Perform robust non-negative matrix factorization:
-
-```julia
-
-# Generate synthetic non-negative data
-X, W_true, H_true = generate_synthetic_data(50, 40; rank=6, seed=1)
-
-# Add Gaussian noise (in-place)
-add_gaussian_noise!(X; σ=0.2)
-
-# Add sparse outliers (in-place)
-add_sparse_outliers!(X; fraction=0.05, magnitude=5.0, seed=1)
-
-# Normalize and rescale data to non-negative range
-normalize_nonnegative!(X)
-
-# Run standard NMF
-W_nmf, H_nmf, history = nmf(X; rank=6, maxiter=500, tol=1e-4)
-
-# Reconstruct the data matrix (X)
-X_rec = W_nmf * H_nmf
-
-# Run robust NMF
-W_robust, H_robust, history_robust = robustnmf(X; rank=6, maxiter=500, tol=1e-3, seed=1)
-
-# Compare relative reconstruction error
-relerr_nmf = norm(X - W_nmf * H_nmf) / norm(X)
-relerr_robust = norm(X - W_robust * H_robust) / norm(X)
-println("relative error NMF:    ", relerr_nmf)
-println("relative error robust: ", relerr_robust)
-
-# Plot convergence of both runs
-p_nmf = plot_convergence(history; objective=:frobenius, title="NMF Convergence")
-p_rob = plot_convergence(history_robust; objective=:huber, title="Robust NMF Convergence")
-display(p_nmf)
-display(p_rob)
-
-```
+- **Two NMF algorithms** - Standard and Robust (Huber loss) options
+- **Data utilities** - Synthetic data generation, noise/outlier injection, normalization, image loading
+- **Visualization** - Basis vectors, reconstructions, convergence tracking, and comprehensive summaries
+- **Easy comparison** - Evaluate both algorithms on the same data
 
 ---
 
-## Notes
+## Quick Navigation
 
--   All input data must be non-negative.
+- **[Getting Started](getting_started.md)** - Installation and first example
+- **[API Reference](api.md)** - Complete function documentation
+- **[Examples](examples.md)** - Practical use cases and workflows
 
--   Functions with a ! modify their input in-place.
+---
 
--   The reconstructed matrix X_rec approximates the original data X.
+## Installation
+
+Install directly from GitHub:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/TU-Julia-RobustNMF/RobustNMF.jl")
+using RobustNMF
+```
+
+**Requirements:** Julia 1.11+ (see `Project.toml`)
+
+---
+
+For more information, see the [GitHub repository](https://github.com/TU-Julia-RobustNMF/RobustNMF.jl).
