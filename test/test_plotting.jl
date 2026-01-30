@@ -171,7 +171,8 @@ end
     println("="^60)
     
     # Create output directory for plots in a writable temp location
-    output_dir = mktempdir()
+    output_dir = joinpath(@__DIR__, "test_plots")
+    mkpath(output_dir)
     
     # Generate synthetic data with noise
     println("\n1. Generating synthetic data...")
