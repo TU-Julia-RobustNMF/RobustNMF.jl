@@ -221,7 +221,7 @@ function update_huber(
     ϵ::Real = eps(Float64))
 
     # Convert epsilon to match the element type for numerical stability
-    T = eltype(X)
+    T = typeof(one(eltype(X)))
     ϵ_T = convert(T, ϵ)  # ϵ in type T for denominators
 
     # Compute the current reconstruction once
@@ -333,8 +333,6 @@ function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
             G_new[k, i] = G[k, i] * (G1[k, i] / G2[k, i])
         end
     end
-# QUESTION: why not G_new = G .* (G1 ./ G2)
-
     
     # Ensure non-negativity
     @. G_new = max(G_new, eps_update)
@@ -427,7 +425,7 @@ function robustnmf_huber(
     rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
     m, n = size(X)
-    T = eltype(X)
+    T = typeof(one(eltype(X)))
 
     # Initialize W and H with random non-negative values
     W = rand(rng, T, m, rank)
