@@ -1,4 +1,4 @@
-using LinearAlgebra: norm
+using LinearAlgebra: norm, mul!
 using Random: Random, MersenneTwister, rand
 
 """
@@ -69,10 +69,26 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothi
     history = T[]
     prev_obj = T(Inf)
 
+    WtW = similar(W, rank, rank)
+    HtH = similar(H, rank, rank)
+    WtX = similar(H, rank, n)
+    XHt = similar(W, m, rank)
+    WtWH = similar(H, rank, n)
+    WHHt = similar(W, m, rank)
+
     # Updating H and W
     for iter in 1:maxiter
-        H .*= (W' * X) ./ (W' * W * H .+ ϵ)
-        W .*= (X * H') ./ (W * H * H' .+ ϵ)
+        # H update: (W' * X) ./ (W' * W * H + ϵ)
+        mul!(WtX, W', X)
+        mul!(WtW, W', W)
+        mul!(WtWH, WtW, H)
+        @. H *= WtX / (WtWH + ϵ)
+
+        # W update: (X * H') ./ (W * H * H' + ϵ)
+        mul!(XHt, X, H')
+        mul!(HtH, H, H')
+        mul!(WHHt, W, HtH)
+        @. W *= XHt / (WHHt + ϵ)
 
         # Check how much it changed, if change too small --> stop
         obj = norm(X - W * H)^2  # in julia norm of matrix is frobenius norm by default

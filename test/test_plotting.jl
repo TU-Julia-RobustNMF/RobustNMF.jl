@@ -1,7 +1,12 @@
 using Test
+ENV["GKSwstype"] = "100"
+ENV["PLOTS_TEST"] = "true"
+
 using RobustNMF
 using Plots
 using Statistics
+
+gr()
 
 @testset "Plotting Functions" begin
     

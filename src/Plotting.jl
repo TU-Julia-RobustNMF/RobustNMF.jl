@@ -113,7 +113,7 @@ function plot_activation_coefficients(H::AbstractMatrix; max_samples::Int=10,
     
     # Otherwise, show individual sample profiles
     n_display = min(n, max_samples)
-    plots = []
+    plots = Plots.Plot[]
     
     for i in 1:n_display
         p = bar(H[:, i], xlabel="Component", ylabel="Activation",
@@ -162,7 +162,7 @@ function plot_reconstruction_comparison(X_original::AbstractMatrix, X_recon::Abs
     @assert size(X_recon) == (m, n) "X_original and X_recon must have same dimensions"
     
     n_display = min(n, n_samples)
-    plots = []
+    plots = Plots.Plot[]
     
     for i in 1:n_display
         orig = X_original[:, i]
@@ -553,7 +553,7 @@ function plot_image_reconstruction(X::AbstractMatrix, W::AbstractMatrix, H::Abst
         indices = indices[1:min(length(indices), n_images)]
     end
     
-    plots = []
+    plots = Plots.Plot[]
     
     for idx in indices
         # Original

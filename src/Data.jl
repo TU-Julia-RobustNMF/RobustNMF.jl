@@ -309,28 +309,21 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", 
         error("No files matching pattern '$pattern' found in $dir")
     end
 
-    # Load and convert images to grayscale arrays
-    imgs = Matrix{Float64}[]
-    for f in files
-        img = load(f)       # from FileIO/ImageIO
+    # Load first image to determine size and preallocate X
+    first_img = load(files[1])
+    first_gray = Float64.(Array(Gray.(first_img)))
+    h, w = size(first_gray)
 
-        # 2D grayscale Float64 matrix
-        img_gray = Float64.(Array(Gray.(img)))  
-        
-        push!(imgs, img_gray)
-    end
-
-    # Check if all images have the same size
-    h, w = size(imgs[1])
-    for img in imgs
-        size(img) == (h, w) || error("All images must have same size")
-    end
-
-    # Flatten and stack as columns in X
-    num = length(imgs)
+    num = length(files)
     X = zeros(h * w, num)
-    for (j, img) in enumerate(imgs)
-        X[:, j] .= vec(img)
+    X[:, 1] .= vec(first_gray)
+
+    # Load remaining images, validate size, and fill X
+    for (j, f) in enumerate(files[2:end], start=2)
+        img = load(f)
+        img_gray = Float64.(Array(Gray.(img)))
+        size(img_gray) == (h, w) || error("All images must have same size")
+        X[:, j] .= vec(img_gray)
     end
 
     # Optionally normalize to [0, 1] and non-negative
