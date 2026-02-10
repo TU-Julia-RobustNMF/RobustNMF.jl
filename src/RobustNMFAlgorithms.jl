@@ -93,7 +93,7 @@ Returns `Ω` with the same size as `R`.
 - `ϵ=eps(Float64)`: Small constant to avoid division by zero.
 
 # Returns
-- `Ω::Matrix{Float64}`: Weight matrix of same size as `R`.
+- `Ω::AbstractMatrix`: Weight matrix of same size as `R` (same type as `R`).
 
 # Side Effects
 - None.
@@ -136,6 +136,25 @@ function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Fl
 end
 
 
+"""
+    huber_weights!(Ω::AbstractMatrix{<:Real}, R::AbstractMatrix{<:Real}, delta::Real; ϵ=eps(Float64))
+
+In-place version of `huber_weights`. Writes weights into preallocated `Ω`.
+
+# Arguments
+- `Ω::AbstractMatrix{<:Real}`: Preallocated weight matrix (same size as `R`).
+- `R::AbstractMatrix{<:Real}`: Residual matrix.
+- `delta::Real`: Huber threshold δ (> 0).
+
+# Keyword Arguments
+- `ϵ=eps(Float64)`: Small constant to avoid division by zero.
+
+# Returns
+- `Ω::AbstractMatrix`: The filled weights matrix.
+
+# Errors
+- `ArgumentError`: If `delta <= 0` or size mismatch.
+"""
 function huber_weights!(Ω::AbstractMatrix{<:Real}, R::AbstractMatrix{<:Real},
                         delta::Real; ϵ::Real = eps(Float64))
     if delta <= 0
@@ -251,7 +270,7 @@ function update_huber(
     ϵ::Real = eps(Float64))
 
     # Convert epsilon to match the element type for numerical stability
-    T = typeof(one(eltype(X)))
+    T = eltype(X)
     ϵ_T = convert(T, ϵ)  # ϵ in type T for denominators
 
     # Compute the current reconstruction once
@@ -541,7 +560,7 @@ to sample-wise outliers (entire corrupted columns in `X`).
 # Keyword Arguments
 - `rank::Int=10`: Factorization rank.
 - `maxiter::Int=500`: Maximum number of iterations.
-- `tol::Real=1e-4`: Absolute tolerance for stopping.
+- `tol::Real=1e-4`: Relative tolerance for stopping based on objective change.
 - `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
@@ -553,11 +572,11 @@ to sample-wise outliers (entire corrupted columns in `X`).
 - None. (The function does not modify `X`.)
 
 # Errors
-- `AssertionError`: If `X` contains negative entries or parameters are invalid.
+- `ArgumentError`: If `X` contains negative entries or parameters are invalid.
 
 # Notes
 - Legacy algorithm kept for compatibility; Huber is the default robust method.
-- Convergence check uses absolute objective value (`error < tol`).
+- Convergence check uses relative change in objective.
 
 # Examples
 ```jldoctest
