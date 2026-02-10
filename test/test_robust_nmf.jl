@@ -127,7 +127,7 @@ using Statistics
         F, G, history = robustnmf_l21(X2; rank=5, maxiter=50, tol=1e9, seed=nothing)
         @test size(F) == (30, 5)
         @test size(G) == (5, 20)
-        @test length(history) == 1
+        @test length(history) == 2
     end
 end
 

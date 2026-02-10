@@ -1,5 +1,5 @@
-using LinearAlgebra: norm, Diagonal
-using Random: Random, MersenneTwister, rand, seed!
+using LinearAlgebra: norm
+using Random: Random, MersenneTwister, rand
 
 # --- Helper Functions ---
 """
@@ -46,7 +46,7 @@ function huber_loss(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float
     end
 
     # Convert delta and work with element type of R
-    T = typeof(one(eltype(R)))
+    T = eltype(R)
     δ = convert(T, delta)
 
     # Accumulate total loss
@@ -112,11 +112,11 @@ function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Fl
         throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
     end
 
-    T = typeof(one(eltype(R)))
+    T = eltype(R)
     δ = convert(T, delta)
 
     # Allocate the weights matrix once and fill it in place
-    Ω = Matrix{T}(undef, size(R))
+    Ω = similar(R)
 
     # Fill weights entry-wise
     @inbounds for j in axes(R, 2), i in axes(R, 1)
@@ -128,6 +128,31 @@ function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Fl
             Ω[i, j] = one(T)
         else
             # Linear region: downweight large residuals
+            Ω[i, j] = δ / (ar + ϵ)
+        end
+    end
+
+    return Ω
+end
+
+
+function huber_weights!(Ω::AbstractMatrix{<:Real}, R::AbstractMatrix{<:Real},
+                        delta::Real; ϵ::Real = eps(Float64))
+    if delta <= 0
+        throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
+    end
+    if size(Ω) != size(R)
+        throw(ArgumentError("Ω must be the same size as R (got size(Ω)=$(size(Ω)), size(R)=$(size(R)))."))
+    end
+
+    T = eltype(R)
+    δ = convert(T, delta)
+
+    @inbounds for j in axes(R, 2), i in axes(R, 1)
+        ar = abs(R[i, j])
+        if ar <= δ
+            Ω[i, j] = one(T)
+        else
             Ω[i, j] = δ / (ar + ϵ)
         end
     end
@@ -169,8 +194,13 @@ true
 ```
 """
 function l21_loss(X::AbstractMatrix)
-    return sum(norm(X[:, i]) for i in 1:size(X, 2))
+    s = zero(eltype(X))
+    @inbounds for col in eachcol(X)
+        s += norm(col)
+    end
+    return s
 end
+
 
 
 # --- Update Rules ---
@@ -261,7 +291,7 @@ end
 
 
 """
-    update_l21(X, F, G; eps_update=1e-10)
+    update_l21(X, W, H; eps_update=1e-10)
 
 Perform one iteration of L2,1-NMF multiplicative updates.
 
@@ -270,15 +300,15 @@ algorithm robust to sample-wise (column-wise) outliers.
 
 # Arguments
 - `X::AbstractMatrix`: Data matrix `(m, n)`.
-- `F::AbstractMatrix`: Current basis matrix `(m, rank)`.
-- `G::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
+- `W::AbstractMatrix`: Current basis matrix `(m, rank)`.
+- `H::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
 
 # Keyword Arguments
 - `eps_update::Real=1e-10`: Small constant for numerical stability.
 
 # Returns
-- `F_new::Matrix{Float64}`: Updated basis matrix.
-- `G_new::Matrix{Float64}`: Updated coefficient matrix.
+- `W_new::Matrix{Float64}`: Updated basis matrix.
+- `H_new::Matrix{Float64}`: Updated coefficient matrix.
 
 # Side Effects
 - None.
@@ -291,53 +321,79 @@ algorithm robust to sample-wise (column-wise) outliers.
 - Update uses a diagonal reweighting matrix `D` derived from column residuals.
 
 """
-function update_l21(X::AbstractMatrix, F::AbstractMatrix, G::AbstractMatrix;
-                    eps_update::Real=1e-10)
-    
-    m, n = size(X)
-    rank = size(F, 2)
+struct L21Workspace{T}
+    WH::Matrix{T}
+    R::Matrix{T}
+    d::Vector{T}
+    XD::Matrix{T}
+    W1::Matrix{T}
+    W2::Matrix{T}
+    WtW::Matrix{T}
+    H1::Matrix{T}
+    H2::Matrix{T}
+end
+
+function L21Workspace(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix)
     T = eltype(X)
+    m, n = size(X)
+    rank = size(W, 2)
+    return L21Workspace{T}(
+        similar(X, m, n),   # WH
+        similar(X, m, n),   # R
+        Vector{T}(undef, n),
+        similar(X, m, n),   # XD
+        similar(W, m, rank),
+        similar(W, m, rank),
+        similar(W, rank, rank),
+        similar(H, rank, n),
+        similar(H, rank, n),
+    )
+end
 
-    # Compute diagonal weight matrix D
-    # d[i] = 1 / (2 * ||x_i - F*g_i||_2)
-    d = zeros(T, n)
-    for i in 1:n
-        residual_norm = norm(X[:, i] - F * G[:, i])
-        d[i] = one(T) / (T(2) * residual_norm + eps_update)
-    end
-    D = Diagonal(d)
-    
-    # Update F using multiplicative update rule
-    F_new = similar(F)
-    F1 = X * D * G'
-    F2 = F * G * D * G' .+ eps_update
-    
-    for j in 1:m
-        for k in 1:rank
-            F_new[j, k] = F[j, k] * (F1[j, k] / F2[j, k])
-        end
-    end
-    # QUESTION: why not F_new = F .* (F1 ./ F2)
+function update_l21!(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix,
+                     ws::L21Workspace;
+                     eps_update::Real=1e-10)
 
+    T = eltype(X)
+    epsT = T(eps_update)
 
-    # Ensure non-negativity
-    @. F_new = max(F_new, eps_update)
-    
-    # Update G using multiplicative update rule
-    G_new = similar(G)
-    G1 = F_new' * X * D
-    G2 = F_new' * F_new * G * D .+ eps_update
-    
-    for k in 1:rank
-        for i in 1:n
-            G_new[k, i] = G[k, i] * (G1[k, i] / G2[k, i])
-        end
+    # Compute residual once: R = X - W*H
+    mul!(ws.WH, W, H)
+    @. ws.R = X - ws.WH
+
+    # d[i] = 1 / (2 * ||r_i||_2 + eps)
+    @inbounds for (i, col) in enumerate(eachcol(ws.R))
+        ws.d[i] = inv(T(2) * norm(col) + epsT)
     end
-    
-    # Ensure non-negativity
-    @. G_new = max(G_new, eps_update)
-    
-    return F_new, G_new
+
+    # Pre-scale columns instead of forming Diagonal(d)
+    drow = reshape(ws.d, 1, :)
+    @. ws.XD = X .* drow
+
+    # Update W using multiplicative update rule
+    mul!(ws.W1, ws.XD, H')
+    @. ws.R = ws.WH .* drow
+    mul!(ws.W2, ws.R, H')
+    @. ws.W2 = ws.W2 + epsT
+    @. W = max(W .* (ws.W1 ./ ws.W2), epsT)
+
+    # Update H using multiplicative update rule
+    mul!(ws.H1, W', ws.XD)
+    mul!(ws.WtW, W', W)
+    mul!(ws.H2, ws.WtW, H)
+    @. ws.H2 = ws.H2 .* drow
+    @. ws.H2 = ws.H2 + epsT
+    @. H = max(H .* (ws.H1 ./ ws.H2), epsT)
+
+    return W, H
+end
+
+function update_l21(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix;
+                    eps_update::Real=1e-10)
+    ws = L21Workspace(X, W, H)
+    Wc = copy(W)
+    Hc = copy(H)
+    return update_l21!(X, Wc, Hc, ws; eps_update=eps_update)
 end
 
 # --- Full Algorithms ---
@@ -437,6 +493,7 @@ function robustnmf_huber(
     # Track objective history (Huber loss values)
     history = T[]
     prev_obj = T(Inf)
+    Ω = similar(X)
 
     # --- Main optimization loop ---
     for iter in 1:maxiter
@@ -455,7 +512,7 @@ function robustnmf_huber(
         prev_obj = obj
 
         # Compute IRLS weights from current residual
-        Ω = huber_weights(R, delta; ϵ=ϵ)
+        huber_weights!(Ω, R, delta; ϵ=ϵ)
 
         # Perform one weighted multiplicative update step
         W, H = update_huber(X, W, H, Ω; ϵ=ϵ)
@@ -475,7 +532,7 @@ end
 
 L2,1-Norm Regularized Non-negative Matrix Factorization.
 
-Minimizes: ||X - FG||_{2,1} where the L2,1-norm promotes robustness
+Minimizes: ||X - WH||_{2,1} where the L2,1-norm promotes robustness
 to sample-wise outliers (entire corrupted columns in `X`).
 
 # Arguments
@@ -488,8 +545,8 @@ to sample-wise outliers (entire corrupted columns in `X`).
 - `seed=nothing`: Optional random seed for reproducibility.
 
 # Returns
-- `F::Matrix{Float64}`: Non-negative basis matrix `(m, rank)`.
-- `G::Matrix{Float64}`: Non-negative coefficient matrix `(rank, n)`.
+- `W::Matrix{Float64}`: Non-negative basis matrix `(m, rank)`.
+- `H::Matrix{Float64}`: Non-negative coefficient matrix `(rank, n)`.
 - `history::Vector{Float64}`: L2,1 objective values per iteration.
 
 # Side Effects
@@ -508,9 +565,9 @@ julia> using RobustNMF
 
 julia> X, _, _ = generate_synthetic_data(20, 12; rank=4, seed=7);
 
-julia> F, G, history = robustnmf_l21(X; rank=4, maxiter=50, tol=1e-3, seed=7);
+julia> W, H, history = robustnmf_l21(X; rank=4, maxiter=50, tol=1e-3, seed=7);
 
-julia> size(F), size(G), length(history) > 0
+julia> size(W), size(H), length(history) > 0
 ((20, 4), (4, 12), true)
 ```
 """
@@ -519,42 +576,55 @@ function robustnmf_l21(X::AbstractMatrix{<:Real};
                  maxiter::Int=500,
                  tol::Real=1e-4,
                  seed::Union{Int,Nothing}=nothing)
-    
-    @assert minimum(X) >= 0 "X must be non-negative"
-    @assert rank > 0 "rank must be positive"
-    @assert maxiter > 0 "maxiter must be positive"
-    
-    # Set random seed if provided
-    if seed !== nothing
-        Random.seed!(seed)
+
+    if any(x -> x < 0, X)
+        throw(ArgumentError("X must be non-negative for NMF (found negative entries)."))
     end
+    if rank <= 0
+        throw(ArgumentError("rank must be positive (got rank=$rank)."))
+    end
+    if maxiter <= 0
+        throw(ArgumentError("maxiter must be positive (got maxiter=$maxiter)."))
+    end
+    if tol <= 0
+        throw(ArgumentError("tol must be positive (got tol=$tol)."))
+    end
+
+    # Reproducible initialization using a local RNG
+    rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
     
     m, n = size(X)
     T = eltype(X)
 
-    # Initialize F and G with random non-negative values
-    F = rand(T, m, rank) .* T(0.5) .+ T(0.1)
-    G = rand(T, rank, n) .* T(0.5) .+ T(0.1)
+    # Initialize W and H with random non-negative values
+    W = rand(rng, T, m, rank) .* T(0.5) .+ T(0.1)
+    H = rand(rng, T, rank, n) .* T(0.5) .+ T(0.1)
 
     # Track convergence history
-    history = zeros(T, maxiter)
+    history = Vector{T}(undef, maxiter)
+    prev_err = T(Inf)
+    epsT = eps(T)
+    ws = L21Workspace(X, W, H)
     
     # Iterative updates
     for iter in 1:maxiter
         # Perform one L2,1-NMF update
-        F, G = update_l21(X, F, G)
+        update_l21!(X, W, H, ws; eps_update=epsT)
         
         # Compute L2,1-norm error
-        error = l21_loss(X - F * G)
+        mul!(ws.WH, W, H)
+        @. ws.R = X - ws.WH
+        error = l21_loss(ws.R)
         history[iter] = error
         
         # Check convergence
-        if error < tol # QUESTION: why not relative change: abs(prev_err - err) / (prev_err + ϵ) < tol
+        if abs(prev_err - error) / (prev_err + epsT) < tol
             history = history[1:iter]
             break
         end
+        prev_err = error
     end
-    return F, G, history
+    return W, H, history
 end
 
 

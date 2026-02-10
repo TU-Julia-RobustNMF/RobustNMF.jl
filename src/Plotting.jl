@@ -43,10 +43,10 @@ function plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components
         layout = (nrows, ncols)
     end
     
-    plots = []
+    plots = Vector{Plots.Plot}(undef, n_display)
     
     for i in 1:n_display
-        basis = W[:, i]
+        basis = @view W[:, i]
         
         if img_shape !== nothing
             # Reshape as image
