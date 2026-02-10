@@ -107,32 +107,8 @@ Returns `Ω` with the same size as `R`.
 
 """
 function huber_weights(R::AbstractMatrix{<:Real}, delta::Real; ϵ::Real = eps(Float64))
-    # Validate delta: must be positive to define a Huber threshold.
-    if delta <= 0
-        throw(ArgumentError("delta must be > 0 for Huber weights (got delta=$delta)."))
-    end
-
-    T = eltype(R)
-    δ = convert(T, delta)
-
-    # Allocate the weights matrix once and fill it in place
     Ω = similar(R)
-
-    # Fill weights entry-wise
-    @inbounds for j in axes(R, 2), i in axes(R, 1)
-        # Residual magnitude at entry (i, j)
-        ar = abs(R[i, j])
-
-        if ar <= δ
-            # Quadratic region: full weight
-            Ω[i, j] = one(T)
-        else
-            # Linear region: downweight large residuals
-            Ω[i, j] = δ / (ar + ϵ)
-        end
-    end
-
-    return Ω
+    return huber_weights!(Ω, R, delta; ϵ=ϵ)
 end
 
 
