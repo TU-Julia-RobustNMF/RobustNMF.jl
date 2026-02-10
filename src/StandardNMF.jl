@@ -25,7 +25,7 @@ multiplicative update rules with squared Frobenius reconstruction loss.
 - None. (The function does not modify `X`.)
 
 # Errors
-- None.
+- `ArgumentError`: If `X` contains negative entries or parameters are invalid.
 
 # Notes
 - Uses multiplicative updates with a small epsilon for numerical stability.
@@ -44,36 +44,45 @@ julia> size(W), size(H), length(history) > 0
 ```
 """
 function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothing)
+    if any(x -> x < 0, X)
+        throw(ArgumentError("X must be non-negative for NMF (found negative entries)."))
+    end
+    if rank <= 0
+        throw(ArgumentError("rank must be positive (got rank=$rank)."))
+    end
+    if maxiter <= 0
+        throw(ArgumentError("maxiter must be positive (got maxiter=$maxiter)."))
+    end
+    if tol <= 0
+        throw(ArgumentError("tol must be positive (got tol=$tol)."))
+    end
 
-        rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
+    rng = seed === nothing ? Random.default_rng() : MersenneTwister(seed)
 
-        m, n = size(X)
-        T = eltype(X)
-        W = rand(rng, T, m, rank)
-        H = rand(rng, T, rank, n)
+    m, n = size(X)
+    T = eltype(X)
+    W = rand(rng, T, m, rank)
+    H = rand(rng, T, rank, n)
 
-        # @assert minimum(X) >= 0 "X must be non-negative"
+    ϵ = eps(T)
 
-        ϵ = eps(T)
+    history = T[]
+    prev_obj = T(Inf)
 
-        history = T[]
-        prev_obj = T(Inf)
-        
+    # Updating H and W
+    for iter in 1:maxiter
+        H .*= (W' * X) ./ (W' * W * H .+ ϵ)
+        W .*= (X * H') ./ (W * H * H' .+ ϵ)
 
-        # updating H and W 
-        for iter in 1:maxiter
-                H .*= (W' * X) ./ (W' * W * H .+ ϵ)
-                W .*= (X * H') ./ (W * H * H' .+ ϵ)
+        # Check how much it changed, if change too small --> stop
+        obj = norm(X - W * H)^2  # in julia norm of matrix is frobenius norm by default
+        push!(history, obj)
 
-                # check how much it changed, if change too small --> stop
-                obj = norm(X - W * H)^2 # in julia norm of matrix is frobenius norm by default
-                push!(history, obj)
-
-                # Relative change stopping criterion
-                if abs(prev_obj - obj) / (prev_obj + ϵ) < tol
-                        break
-                end
-                prev_obj = obj
+        # Relative change stopping criterion
+        if abs(prev_obj - obj) / (prev_obj + ϵ) < tol
+            break
         end
-        return W, H, history
+        prev_obj = obj
+    end
+    return W, H, history
 end

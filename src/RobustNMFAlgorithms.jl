@@ -285,37 +285,6 @@ function update_huber(
 end
 
 
-"""
-    update_l21(X, W, H; eps_update=1e-10)
-
-Perform one iteration of L2,1-NMF multiplicative updates.
-
-The L2,1-norm promotes row sparsity in the residual matrix, making the
-algorithm robust to sample-wise (column-wise) outliers.
-
-# Arguments
-- `X::AbstractMatrix`: Data matrix `(m, n)`.
-- `W::AbstractMatrix`: Current basis matrix `(m, rank)`.
-- `H::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
-
-# Keyword Arguments
-- `eps_update::Real=1e-10`: Small constant for numerical stability.
-
-# Returns
-- `W_new::Matrix{Float64}`: Updated basis matrix.
-- `H_new::Matrix{Float64}`: Updated coefficient matrix.
-
-# Side Effects
-- None.
-
-# Errors
-- None.
-
-# Notes
-- Legacy algorithm kept for compatibility; Huber is the default robust method.
-- Update uses a diagonal reweighting matrix `D` derived from column residuals.
-
-"""
 struct L21Workspace{T}
     WH::Matrix{T}
     R::Matrix{T}
@@ -383,6 +352,37 @@ function update_l21!(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix,
     return W, H
 end
 
+"""
+    update_l21(X, W, H; eps_update=1e-10)
+
+Perform one iteration of L2,1-NMF multiplicative updates.
+
+The L2,1-norm promotes row sparsity in the residual matrix, making the
+algorithm robust to sample-wise (column-wise) outliers.
+
+# Arguments
+- `X::AbstractMatrix`: Data matrix `(m, n)`.
+- `W::AbstractMatrix`: Current basis matrix `(m, rank)`.
+- `H::AbstractMatrix`: Current coefficient matrix `(rank, n)`.
+
+# Keyword Arguments
+- `eps_update::Real=1e-10`: Small constant for numerical stability.
+
+# Returns
+- `W_new::Matrix{Float64}`: Updated basis matrix.
+- `H_new::Matrix{Float64}`: Updated coefficient matrix.
+
+# Side Effects
+- None.
+
+# Errors
+- None.
+
+# Notes
+- Legacy algorithm kept for compatibility; Huber is the default robust method.
+- Update uses a diagonal reweighting matrix `D` derived from column residuals.
+
+"""
 function update_l21(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix;
                     eps_update::Real=1e-10)
     ws = L21Workspace(X, W, H)

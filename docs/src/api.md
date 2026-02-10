@@ -33,7 +33,8 @@ robustnmf_huber
 
 ### Robust NMF (Legacy L2,1)
 
-Legacy L2,1-robust NMF (kept for compatibility).
+Legacy L2,1-robust NMF (kept for compatibility). Uses a relative-change stopping
+criterion in the objective.
 
 ```@docs
 robustnmf_l21
@@ -43,10 +44,13 @@ robustnmf_l21
 
 ### Helper Functions (Internal)
 
+Includes in-place variants (e.g., `huber_weights!`) for allocation-free use.
+
 ```@docs
 update_huber
 huber_loss
 huber_weights
+huber_weights!
 update_l21
 l21_loss
 ```
