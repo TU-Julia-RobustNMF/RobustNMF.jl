@@ -48,6 +48,7 @@ Includes in-place variants (e.g., `huber_weights!`) for allocation-free use.
 
 ```@docs
 update_huber
+update_huber!
 huber_loss
 huber_weights
 huber_weights!
