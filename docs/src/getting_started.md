@@ -45,7 +45,7 @@ X, W_true, H_true = generate_synthetic_data(50, 40; rank=6, seed=1)
 add_gaussian_noise!(X; σ=0.2)
 
 # Add sparse outliers (in-place)
-add_sparse_outliers!(X; fraction=0.05, magnitude=5.0, seed=1)
+add_sparse_outliers!(X; fraction=0.05, magnitude=5.0, seed=2)
 
 # Normalize and rescale data to non-negative range
 normalize_nonnegative!(X)
