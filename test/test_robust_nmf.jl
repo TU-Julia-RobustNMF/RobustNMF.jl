@@ -163,7 +163,7 @@ using Statistics
         @test length(history) == 2
 
         # --- update_l21 wrapper coverage ---
-        Wl21, Hl21 = update_l21(X2, F, G; eps_update=1e-10)
+        Wl21, Hl21 = RobustNMF.update_l21(X2, F, G; eps_update=1e-10)
         @test size(Wl21) == size(F)
         @test size(Hl21) == size(G)
     end

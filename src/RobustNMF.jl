@@ -67,6 +67,12 @@ nmf,
 huber_weights,
 huber_loss,
 l21_loss, 
+update_huber,
+update_huber!,
+update_l21,
+update_l21!,
+HuberWorkspace,
+L21Workspace,
 robustnmf_l21,
 robustnmf_huber,
 robustnmf,
@@ -74,5 +80,4 @@ plot_basis_vectors, plot_activation_coefficients,
 plot_reconstruction_comparison, plot_convergence,
 plot_nmf_summary, plot_image_reconstruction
 
-#QUESTION l21_loss not used? just in example in RobustNMFAlgorithms
 end # module RobustNMF
