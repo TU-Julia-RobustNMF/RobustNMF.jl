@@ -229,6 +229,7 @@ Returns updated `(W, H)`.
 
 # Side Effects
 - Updates `W` and `H` in-place.
+- Allocates a `HuberWorkspace` each call; use `update_huber!` for allocation-free updates.
 
 # Errors
 - None.
@@ -245,41 +246,91 @@ function update_huber(
     Ω::AbstractMatrix{<:Real};
     ϵ::Real = eps(Float64))
 
+    ws = HuberWorkspace(X, W, H)
+    ws.Ω .= Ω
+    return update_huber!(ws, X, W, H; ϵ=ϵ)
+end
+
+
+
+struct HuberWorkspace{T}
+    WH::Matrix{T}
+    R::Matrix{T}
+    Ω::Matrix{T}
+    ΩX::Matrix{T}
+    ΩWH::Matrix{T}
+    numH::Matrix{T}
+    denH::Matrix{T}
+    numW::Matrix{T}
+    denW::Matrix{T}
+end
+
+function HuberWorkspace(X::AbstractMatrix, W::AbstractMatrix, H::AbstractMatrix)
+    T = eltype(X)
+    m, n = size(X)
+    rank = size(W, 2)
+    return HuberWorkspace{T}(
+        similar(X, m, n),     # WH
+        similar(X, m, n),     # R
+        similar(X, m, n),     # Ω
+        similar(X, m, n),     # ΩX
+        similar(X, m, n),     # ΩWH
+        similar(H, rank, n),  # numH
+        similar(H, rank, n),  # denH
+        similar(W, m, rank),  # numW
+        similar(W, m, rank),  # denW
+    )
+end
+
+"""
+    update_huber!(ws, X, W, H; ϵ=eps(Float64))
+
+In-place Huber weighted multiplicative update using preallocated workspace `ws`.
+This is the allocation-free path when `ws` is reused across iterations.
+"""
+function update_huber!(
+    ws::HuberWorkspace,
+    X::AbstractMatrix{<:Real},
+    W::AbstractMatrix{<:Real},
+    H::AbstractMatrix{<:Real};
+    ϵ::Real = eps(Float64))
+
     # Convert epsilon to match the element type for numerical stability
     T = eltype(X)
     ϵ_T = convert(T, ϵ)  # ϵ in type T for denominators
 
     # Compute the current reconstruction once
-    WH = W * H
+    mul!(ws.WH, W, H)
 
     # Apply weights to X and WH (element-wise)
-    # These are the weighted "data" and weighted "model" for the update rules
-    ΩX = Ω .* X
-    ΩWH = Ω .* WH
+    @. ws.ΩX = ws.Ω .* X
+    @. ws.ΩWH = ws.Ω .* ws.WH
 
     # --- Update H ---
     # Numerator: W' * (Ω ⊙ X)
-    numH = W' * ΩX
+    mul!(ws.numH, W', ws.ΩX)
 
     # Denominator: W' * (Ω ⊙ (W*H)) + ϵ
-    denH = W' * ΩWH .+ ϵ_T
+    mul!(ws.denH, W', ws.ΩWH)
+    @. ws.denH = ws.denH + ϵ_T
 
     # Multiplicative update (element-wise)
-    H .= H .* (numH ./ denH)
+    @. H = H * (ws.numH / ws.denH)
 
     # Recompute WH after updating H (keeps the next step consistent)
-    WH = W * H
-    ΩWH = Ω .* WH
+    mul!(ws.WH, W, H)
+    @. ws.ΩWH = ws.Ω .* ws.WH
 
     # --- update W ---
     # Numerator: (Ω ⊙ X) * H'
-    numW = ΩX * H'
+    mul!(ws.numW, ws.ΩX, H')
 
     # Denominator: (Ω ⊙ (W*H)) * H' + ϵ
-    denW = ΩWH * H' .+ ϵ_T
+    mul!(ws.denW, ws.ΩWH, H')
+    @. ws.denW = ws.denW + ϵ_T
 
     # Multiplicative update (element-wise)
-    W .= W .* (numW ./ denW)
+    @. W = W * (ws.numW / ws.denW)
 
     return W, H
 end
@@ -488,15 +539,17 @@ function robustnmf_huber(
     # Track objective history (Huber loss values)
     history = T[]
     prev_obj = T(Inf)
-    Ω = similar(X)
+    ws = HuberWorkspace(X, W, H)
+    Ω = ws.Ω
 
     # --- Main optimization loop ---
     for iter in 1:maxiter
         # Compute residual with current factors
-        R = X - W * H
+        mul!(ws.WH, W, H)
+        @. ws.R = X - ws.WH
 
         # Compute current objective (Huber loss)
-        obj = huber_loss(R, delta)
+        obj = huber_loss(ws.R, delta)
         push!(history, obj)
 
         # Stopping criterion: relative change in objective
@@ -507,10 +560,11 @@ function robustnmf_huber(
         prev_obj = obj
 
         # Compute IRLS weights from current residual
+        R = ws.R
         huber_weights!(Ω, R, delta; ϵ=ϵ)
 
         # Perform one weighted multiplicative update step
-        W, H = update_huber(X, W, H, Ω; ϵ=ϵ)
+        W, H = update_huber!(ws, X, W, H; ϵ=ϵ)
 
         # Finite check to catch numerical issues early
         if !(all(isfinite, W) && all(isfinite, H))
