@@ -161,11 +161,16 @@ using Statistics
         @test size(F) == (30, 5)
         @test size(G) == (5, 20)
         @test length(history) == 2
+
+        # --- update_l21 wrapper coverage ---
+        Wl21, Hl21 = update_l21(X2, F, G; eps_update=1e-10)
+        @test size(Wl21) == size(F)
+        @test size(Hl21) == size(G)
     end
 end
 
 
-@testset "Legacy L2,1-NMF Algorithm" begin
+    @testset "Legacy L2,1-NMF Algorithm" begin
     # The legacy L2,1-based implementation is kept for backward compatibility
     m, n, r = 50, 30, 5
     X_clean, W_true, H_true = generate_synthetic_data(m, n; rank=r, seed=99)
@@ -207,4 +212,14 @@ end
 
     # L2,1-NMF should perform better (or at least comparably) on outlier data
     @test mae_l21 <= mae_std * 1.5  # Allow some tolerance
-end
+    end
+
+    @testset "Robust NMF (L2,1) Input Validation" begin
+        Xv, _, _ = generate_synthetic_data(10, 8; rank=3, seed=5)
+        X_bad = copy(Xv)
+        X_bad[1, 1] = -0.1
+        @test_throws ArgumentError robustnmf_l21(X_bad; rank=3)
+        @test_throws ArgumentError robustnmf_l21(Xv; rank=0)
+        @test_throws ArgumentError robustnmf_l21(Xv; maxiter=0)
+        @test_throws ArgumentError robustnmf_l21(Xv; tol=0.0)
+    end
