@@ -75,6 +75,8 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothi
     XHt = similar(W, m, rank)
     WtWH = similar(H, rank, n)
     WHHt = similar(W, m, rank)
+    WH = similar(X, m, n)
+    R = similar(X, m, n)
 
     # Updating H and W
     for iter in 1:maxiter
@@ -91,7 +93,9 @@ function nmf(X; rank::Int = 10, maxiter::Int = 500, tol::Real = 1e-4, seed=nothi
         @. W *= XHt / (WHHt + ϵ)
 
         # Check how much it changed, if change too small --> stop
-        obj = norm(X - W * H)^2  # in julia norm of matrix is frobenius norm by default
+        mul!(WH, W, H)
+        @. R = X - WH
+        obj = norm(R)^2  # in julia norm of matrix is frobenius norm by default
         push!(history, obj)
 
         # Relative change stopping criterion

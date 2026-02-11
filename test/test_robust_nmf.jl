@@ -109,7 +109,7 @@ using Statistics
 
         @test_throws ArgumentError huber_weights(R, 0.0)
         @test_throws ArgumentError huber_weights(R, -1.0)
-        @test_throws ArgumentError huber_weights!(zeros(1, 1), R, 1.0)
+        @test_throws ArgumentError RobustNMF.huber_weights!(zeros(1, 1), R, 1.0)
 
         # --- update_huber / update_huber! paths (workspace + wrapper) ---
         X_small = abs.(randn(6, 4))
@@ -117,7 +117,7 @@ using Statistics
         H0 = abs.(randn(2, 4))
         Ω = ones(size(X_small))
 
-        W1, H1 = update_huber(X_small, copy(W0), copy(H0), Ω; ϵ=1e-8)
+        W1, H1 = RobustNMF.update_huber(X_small, copy(W0), copy(H0), Ω; ϵ=1e-8)
         @test size(W1) == size(W0)
         @test size(H1) == size(H0)
         @test all(isfinite, W1)
@@ -125,7 +125,7 @@ using Statistics
 
         ws = RobustNMF.HuberWorkspace(X_small, W0, H0)
         ws.Ω .= Ω
-        W2, H2 = update_huber!(ws, X_small, copy(W0), copy(H0); ϵ=1e-8)
+        W2, H2 = RobustNMF.update_huber!(ws, X_small, copy(W0), copy(H0); ϵ=1e-8)
         @test size(W2) == size(W0)
         @test size(H2) == size(H0)
 
@@ -135,7 +135,7 @@ using Statistics
         H_l21 = abs.(randn(3, 6))
         ws_l21 = RobustNMF.L21Workspace(X_l21, W_l21, H_l21)
 
-        W3, H3 = update_l21!(X_l21, copy(W_l21), copy(H_l21), ws_l21; eps_update=1e-10)
+        W3, H3 = RobustNMF.update_l21!(X_l21, copy(W_l21), copy(H_l21), ws_l21; eps_update=1e-10)
         @test size(W3) == size(W_l21)
         @test size(H3) == size(H_l21)
         @test all(isfinite, W3)
