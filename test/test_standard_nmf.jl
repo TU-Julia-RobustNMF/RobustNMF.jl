@@ -35,3 +35,22 @@ using LinearAlgebra
     @test size(X_recon) == size(X)
 
 end
+
+@testset "StandardNMF.jl Validation" begin
+    m, n, r = 20, 15, 4
+    X, _, _ = generate_synthetic_data(m, n; rank=r, seed=42)
+
+    X_bad = copy(X)
+    X_bad[1, 1] = -0.1
+    @test_throws ArgumentError nmf(X_bad; rank=r)
+
+    @test_throws ArgumentError nmf(X; rank=0)
+    @test_throws ArgumentError nmf(X; maxiter=0)
+    @test_throws ArgumentError nmf(X; tol=0.0)
+end
+
+@testset "StandardNMF.jl Early Stopping" begin
+    X, _, _ = generate_synthetic_data(20, 15; rank=4, seed=123)
+    _, _, history = nmf(X; rank=4, maxiter=10, tol=1e9, seed=1)
+    @test length(history) == 2
+end
