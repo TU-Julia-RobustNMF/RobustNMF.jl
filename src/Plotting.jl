@@ -43,7 +43,7 @@ function plot_basis_vectors(W::AbstractMatrix; img_shape=nothing, max_components
         layout = (nrows, ncols)
     end
     
-    plots = Vector{Plots.Plot}(undef, n_display)
+    plots = Plots.Plot[]
     
     for i in 1:n_display
         basis = @view W[:, i]

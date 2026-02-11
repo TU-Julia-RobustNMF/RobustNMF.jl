@@ -319,11 +319,11 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", 
     X[:, 1] .= vec(first_gray)
 
     # Load remaining images, validate size, and fill X
-    for (j, f) in enumerate(files[2:end], start=2)
+    for (j, f) in enumerate(files[2:end])
         img = load(f)
         img_gray = Float64.(Array(Gray.(img)))
         size(img_gray) == (h, w) || error("All images must have same size")
-        X[:, j] .= vec(img_gray)
+        X[:, j + 1] .= vec(img_gray)
     end
 
     # Optionally normalize to [0, 1] and non-negative
@@ -331,9 +331,9 @@ function load_image_folder(dir::AbstractString; pattern::AbstractString=".png", 
         normalize_nonnegative!(X)
     end
 
-    # Return base.filenames (without directory)
+    # Return base filenames (without directory)
     filenames = basename.(files)
-    
-    return X, (h, w), filenames
 
+    return X, (h, w), filenames
 end
+
